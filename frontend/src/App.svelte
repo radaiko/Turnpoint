@@ -2,7 +2,9 @@
   import { onMount } from "svelte";
   import { ui, toggleTheme, setSection } from "$lib/stores/ui";
   import { getPlatform, type Platform } from "$lib/window";
+  import { VERSION } from "$lib/version";
   import WindowControls from "$lib/components/WindowControls.svelte";
+  import WhatsNew from "$lib/components/WhatsNew.svelte";
   import Toasts from "$lib/components/Toasts.svelte";
   import Athletes from "./views/Athletes.svelte";
   import TestWorkspace from "./views/TestWorkspace.svelte";
@@ -15,6 +17,7 @@
 
   let platform: Platform = "windows";
   $: isMac = platform === "darwin";
+  let showWhatsNew = false;
   onMount(async () => {
     platform = await getPlatform();
   });
@@ -53,7 +56,10 @@
       {/each}
     </div>
     <div class="nav-spacer" />
-    <div class="nav-foot eyebrow">Local · Offline</div>
+    <button class="nav-foot" on:click={() => (showWhatsNew = true)} title="What's New">
+      <span class="eyebrow">Local · Offline</span>
+      <span class="ver mono">v{VERSION}</span>
+    </button>
   </nav>
 
   <main class="stage">
@@ -66,6 +72,8 @@
     {/if}
   </main>
 </div>
+
+<WhatsNew bind:open={showWhatsNew} on:close={() => (showWhatsNew = false)} />
 
 <Toasts />
 
@@ -163,7 +171,21 @@
     flex: 1;
   }
   .nav-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: var(--space-2);
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    width: 100%;
+  }
+  .nav-foot:hover {
+    background: var(--surface-2);
+  }
+  .ver {
+    font-size: var(--fs-eyebrow);
+    color: var(--text-faint);
   }
   .stage {
     flex: 1;

@@ -9,5 +9,9 @@
   "author": {
     "name": "Aiko",
     "email": "a.radlingmayr@pm.me"
+  },
+  "info": {
+    "productName": "Turnpoint",
+    "productVersion": "0.0.1"
   }
 }

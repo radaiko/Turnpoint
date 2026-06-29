@@ -8,7 +8,8 @@
     "baseUrl": ".",
     "paths": {
       "$lib/*": ["./src/lib/*"],
-      "$wails/*": ["./wailsjs/*"]
+      "$wails/*": ["./wailsjs/*"],
+      "$root/*": ["../*"]
     },
     "allowJs": true,
     "checkJs": false,

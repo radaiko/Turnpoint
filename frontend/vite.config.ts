@@ -8,7 +8,12 @@ export default defineConfig({
     alias: {
       $lib: fileURLToPath(new URL("./src/lib", import.meta.url)),
       $wails: fileURLToPath(new URL("./wailsjs", import.meta.url)),
+      $root: fileURLToPath(new URL("..", import.meta.url)),
     },
+  },
+  server: {
+    // allow importing the repo-root CHANGELOG.md (one level above the Vite root)
+    fs: { allow: [".."] },
   },
   build: {
     outDir: "dist",
