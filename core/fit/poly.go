@@ -97,16 +97,6 @@ func (f *PolyFit) SecondDerivative(x float64) float64 {
 	return s / (f.sd * f.sd)
 }
 
-// ThirdDerivative returns d³L/dx³ (used by D2Lmax to locate the L” maximum).
-func (f *PolyFit) ThirdDerivative(x float64) float64 {
-	t := (x - f.mean) / f.sd
-	s := 0.0
-	for j := len(f.coef) - 1; j >= 3; j-- {
-		s = s*t + float64(j*(j-1)*(j-2))*f.coef[j]
-	}
-	return s / (f.sd * f.sd * f.sd)
-}
-
 // Coeffs returns the polynomial coefficients in the ORIGINAL x basis (ascending
 // powers), expanding the centred/scaled form. Used for companion-matrix roots.
 func (f *PolyFit) Coeffs() []float64 {

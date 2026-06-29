@@ -100,6 +100,19 @@ func selectAnchor(marker threshold.Marker, override *Override, byMarker map[thre
 	}
 }
 
+// anchorWarnings flags a non-computable or extrapolated LT1/LT2 anchor (review #2/#5).
+func anchorWarnings(a Anchor, label string, flo, fhi float64) []domain.Warning {
+	if a.Intensity <= 0 {
+		return []domain.Warning{domain.Warnf(domain.WarnMethodNotComputable, label,
+			"%s anchor (%s) is not computable", label, a.Marker)}
+	}
+	if a.Intensity < flo || a.Intensity > fhi {
+		return []domain.Warning{domain.Warnf(domain.WarnExtrapolated, label,
+			"%s at %.1f is outside the tested range [%.1f, %.1f]; value is extrapolated", label, a.Intensity, flo, fhi)}
+	}
+	return nil
+}
+
 // rangeWarnings flags out-of-range values (OI-12 proposed bounds).
 func rangeWarnings(test domain.Test) []domain.Warning {
 	var w []domain.Warning

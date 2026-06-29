@@ -2,6 +2,7 @@ package fit
 
 import (
 	"errors"
+	"fmt"
 	"math"
 
 	"github.com/radaiko/turnpoint/core/domain"
@@ -60,7 +61,7 @@ func Exponential(pts []Point) (*ExpFit, error) {
 	}
 	res, err := optimize.Minimize(prob, []float64{a0, b0, c0}, nil, &optimize.NelderMead{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fit: exponential NLS failed: %w", err)
 	}
 	a, b, c := res.X[0], res.X[1], res.X[2]
 	if math.IsNaN(a) || math.IsNaN(b) || math.IsNaN(c) || math.IsInf(a, 0) || math.IsInf(b, 0) || math.IsInf(c, 0) {

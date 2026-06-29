@@ -129,6 +129,41 @@ func TestRecomputeZonesMatchesFull(t *testing.T) {
 	}
 }
 
+// review #3: per-method params (custom OBLA concentration) change the result.
+func TestMethodParamsApplied(t *testing.T) {
+	in := Input{Test: testutil.LoadAppendixA(t)}
+	cfg := DefaultConfig()
+	a, _ := Analyze(in, cfg)
+	cfg.MethodParams = map[threshold.Marker]threshold.Params{threshold.OBLA4: {OBLAConc: 2.0}}
+	b, _ := Analyze(in, cfg)
+	// OBLA4 with a 2.0 override should now match the 4.0-default's 2.0 marker position.
+	if math.Abs(a.Markers[threshold.OBLA4].Intensity-b.Markers[threshold.OBLA4].Intensity) < 0.5 {
+		t.Errorf("custom OBLAConc had no effect: %.2f vs %.2f", a.Markers[threshold.OBLA4].Intensity, b.Markers[threshold.OBLA4].Intensity)
+	}
+}
+
+// review #2: a non-computable IANS anchor warns and yields no (zero-width) zones.
+func TestNonComputableAnchorSkipsZones(t *testing.T) {
+	// an easy test that never reaches 4 mmol/L → OBLA4 (default IANS) not computable
+	test := domain.Test{Steps: []domain.Step{
+		{Intensity: 6, Lactate: 1.0, HasLactate: true, HeartRate: 100},
+		{Intensity: 8, Lactate: 1.1, HasLactate: true, HeartRate: 110},
+		{Intensity: 10, Lactate: 1.2, HasLactate: true, HeartRate: 120},
+		{Intensity: 12, Lactate: 1.3, HasLactate: true, HeartRate: 130},
+		{Intensity: 14, Lactate: 1.5, HasLactate: true, HeartRate: 140},
+	}}
+	res, err := Analyze(Input{Test: test}, DefaultConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Zones) != 0 {
+		t.Errorf("expected no zones for non-computable IANS, got %d", len(res.Zones))
+	}
+	if !hasWarn(res.Warnings, domain.WarnMethodNotComputable) {
+		t.Error("expected a not-computable warning for the IANS anchor/zones")
+	}
+}
+
 func hasWarn(ws []domain.Warning, code domain.WarnCode) bool {
 	for _, w := range ws {
 		if w.Code == code {

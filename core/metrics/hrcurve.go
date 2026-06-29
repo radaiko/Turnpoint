@@ -24,8 +24,12 @@ func NewHRCurve(steps []domain.Step) HRCurve {
 	type pt struct{ x, hr float64 }
 	var pts []pt
 	for _, s := range steps {
-		if s.Intensity <= 0 || !s.HasLactate {
-			continue // exclude baseline and lactate-less rows
+		// Exclude the baseline row and any step without a real HR reading. HR is
+		// gated on HeartRate>0 (not HasLactate): a missing/0 HR must not inject a
+		// spurious (intensity, 0) node that drags the interpolation toward zero
+		// (review #1).
+		if s.Intensity <= 0 || s.HeartRate <= 0 {
+			continue
 		}
 		pts = append(pts, pt{s.Intensity, float64(s.HeartRate)})
 	}

@@ -5,6 +5,7 @@ package numeric
 
 import (
 	"math"
+	"sort"
 
 	"gonum.org/v1/gonum/mat"
 )
@@ -109,9 +110,11 @@ func PolyRealRoots(coef []float64) []float64 {
 	vals := eig.Values(nil)
 	var roots []float64
 	for _, v := range vals {
-		if math.Abs(imag(v)) < 1e-9 {
+		// scale the imaginary-part tolerance relative to the root magnitude.
+		if math.Abs(imag(v)) <= 1e-9*(1+math.Abs(real(v))) {
 			roots = append(roots, real(v))
 		}
 	}
+	sort.Float64s(roots)
 	return roots
 }

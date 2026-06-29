@@ -110,7 +110,12 @@ func Analyze(in Input, cfg Config) (Result, error) {
 
 	ctx := buildContext(in.Test, pts, cfg)
 	hr := metrics.NewHRCurve(in.Test.Steps)
+	if !hr.Valid() {
+		warnings = append(warnings, domain.Warnf(domain.WarnImplausibleValue, "hr",
+			"heart-rate data is unavailable; interpolated HR will read 0"))
+	}
 	maxI := in.Test.MaxIntensity()
+	flo, fhi := displayFit.Domain()
 
 	res := Result{
 		Fits:         fits,
@@ -128,7 +133,11 @@ func Analyze(in Input, cfg Config) (Result, error) {
 				Warnings: []domain.Warning{domain.Warnf(domain.WarnMethodNotComputable, m.Marker().String(),
 					"required %s fit could not be built", m.RequiredFit())}}
 		} else {
-			r = m.Compute(f, ctx)
+			mctx := ctx
+			if p, ok := cfg.MethodParams[m.Marker()]; ok { // FR-D2 per-method params
+				mctx.Params = p
+			}
+			r = m.Compute(f, mctx)
 			if f != nil {
 				r.Warnings = append(r.Warnings, f.Quality().Warnings...)
 			}
@@ -142,8 +151,17 @@ func Analyze(in Input, cfg Config) (Result, error) {
 
 	res.LT1 = selectAnchor(cfg.LT1Anchor, cfg.LT1Override, byMarker, displayFit, hr, in.Test, maxI)
 	res.LT2 = selectAnchor(cfg.LT2Anchor, cfg.LT2Override, byMarker, displayFit, hr, in.Test, maxI)
+	warnings = append(warnings, anchorWarnings(res.LT1, "IAS", flo, fhi)...)
+	warnings = append(warnings, anchorWarnings(res.LT2, "IANS", flo, fhi)...)
 
-	res.Zones = zone.Derive(cfg.Profile, res.LT1.Intensity, res.LT2.Intensity, displayFit, hr, in.Test.Protocol.Sport)
+	// Only derive zones when the IANS scaling anchor is usable; a zero anchor
+	// would otherwise collapse all five bands to [0,0] (review #2).
+	if res.LT2.Intensity > 0 {
+		res.Zones = zone.Derive(cfg.Profile, res.LT1.Intensity, res.LT2.Intensity, displayFit, hr, in.Test.Protocol.Sport)
+	} else {
+		warnings = append(warnings, domain.Warnf(domain.WarnMethodNotComputable, "zones",
+			"IANS anchor (%s) is not computable; training zones cannot be derived", res.LT2.Marker))
+	}
 
 	if in.Test.BodyMassKg == 0 {
 		warnings = append(warnings, domain.Warning{Code: domain.WarnNoBodyMass, Severity: domain.Info,

@@ -77,8 +77,8 @@ func TestMAX(t *testing.T) {
 
 func TestModDmaxStartsAt14(t *testing.T) {
 	// the first >0.4 rise on Appendix A is 12→14 ⇒ chord starts at 14
-	if v, ok := firstRise(points(), 0.4); !ok || v != 14 {
-		t.Errorf("firstRise = %v,%v want 14,true", v, ok)
+	if v, ok := firstRiseSteps(steps(), 0.4); !ok || v != 14 {
+		t.Errorf("firstRiseSteps = %v,%v want 14,true", v, ok)
 	}
 	r := modDmaxMethod{}.Compute(poly3(t), ctx())
 	if !r.Computable || r.Intensity < 14 || r.Intensity > 20 {

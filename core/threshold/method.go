@@ -144,11 +144,6 @@ func smallestRoot(f fit.Fit, target float64) (float64, bool) {
 	return numeric.LevelSetRoot(f.Predict, lo, hi, target)
 }
 
-// rootOfDerivative finds the smallest intensity where dL/dx equals slope.
-func rootOfDerivative(f fit.Fit, lo, hi, slope float64) (float64, bool) {
-	return numeric.LevelSetRoot(f.Derivative, lo, hi, slope)
-}
-
 // smallestRootAbove finds the smallest intensity in [lo,hi] where the curve
 // equals target.
 func smallestRootAbove(f fit.Fit, lo, hi, target float64) (float64, bool) {
