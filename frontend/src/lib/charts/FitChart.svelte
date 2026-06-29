@@ -397,36 +397,39 @@
   .hit {
     fill: transparent;
   }
+  /* the turn point — the app's signature — is marked in signal red. Solid =
+     algorithmic, dashed = manual override (FR-C3). */
   .marker-line {
-    stroke: var(--text);
-    stroke-width: 1;
+    stroke: var(--series-turnpoint);
+    stroke-width: 1.25;
   }
   .marker-line.manual {
-    stroke: var(--accent);
+    stroke: var(--series-turnpoint);
     stroke-width: 1.5;
     stroke-dasharray: 5 3;
   }
   .handle {
     fill: var(--surface);
-    stroke: var(--text);
-    stroke-width: 1;
+    stroke: var(--series-turnpoint);
+    stroke-width: 1.25;
   }
   .handle.manual {
-    stroke: var(--accent);
+    stroke: var(--series-turnpoint);
     stroke-width: 1.5;
   }
   .marker.dragging .handle,
   .marker:hover .handle {
-    fill: var(--accent);
-    stroke: var(--accent);
+    fill: var(--series-turnpoint);
+    stroke: var(--series-turnpoint);
   }
   .label {
-    font-size: var(--fs-eyebrow);
-    letter-spacing: 0.04em;
+    font-size: var(--fs-micro);
+    letter-spacing: var(--track-micro);
+    text-transform: uppercase;
     fill: var(--text-muted);
     pointer-events: none;
   }
   .label.manual {
-    fill: var(--accent);
+    fill: var(--series-turnpoint);
   }
 </style>

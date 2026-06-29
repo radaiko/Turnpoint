@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { App, type AthleteSummary, type Athlete, type Test, type Template } from "$lib/api";
-  import { openTest } from "$lib/stores/ui";
+  import { ui, openTest } from "$lib/stores/ui";
   import { toast } from "$lib/stores/toast";
-  import { ageFromDOB } from "$lib/format";
+  import { ageFromDOB, formatDate } from "$lib/format";
   import Button from "$lib/components/Button.svelte";
   import Field from "$lib/components/Field.svelte";
   import Select from "$lib/components/Select.svelte";
@@ -146,7 +146,7 @@
       <div class="tests">
         {#each tests as t (t.id)}
           <button class="test-row" on:click={() => openTest(t.id)}>
-            <span class="mono">{t.testDate}</span>
+            <span class="mono">{formatDate(t.testDate, $ui.region)}</span>
             <span class="tag">{t.sport}</span>
             <span class="meta">{t.startIntensity}{t.sport === "cycling" ? "W" : " km/h"} start · +{t.increment}</span>
           </button>

@@ -1,20 +1,23 @@
-/* Turnpoint design system — "Instrument minimal" (DESIGN §5).
-   Cool-neutral surfaces, a single deep-teal accent, hairline borders over shadow,
-   tabular numerics everywhere. System font stack (offline, zero font files). */
+/* Turnpoint design system — "Lab readout".
+   A precision-instrument identity: warm paper + ink, mono-forward data, hairline
+   rules over boxes, and a single oxblood "signal" accent reserved for the turn
+   point (blood lactate) and primary actions. System fonts only (offline). */
 
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
 
-  /* type scale (px / line-height) */
-  --fs-eyebrow: 11px;
+  /* type scale — confident display, mono utility */
+  --fs-micro: 10.5px; /* tracked uppercase labels (mono) */
   --fs-caption: 12px;
   --fs-body: 13px;
   --fs-label: 13px;
   --fs-h3: 15px;
-  --fs-h2: 18px;
-  --fs-h1: 22px;
-  --fs-display: 28px;
+  --fs-h2: 19px;
+  --fs-h1: 25px;
+  --fs-display: 34px;
+
+  --track-micro: 0.14em; /* instrument-label tracking */
 
   /* spacing */
   --space-1: 4px;
@@ -26,69 +29,75 @@
   --space-7: 48px;
   --space-8: 64px;
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
   --radius-pill: 9999px;
 
-  --titlebar-h: 44px;
-  --rail-w: 240px;
+  --titlebar-h: 42px;
+  --rail-w: 232px;
 
-  /* light theme (default) */
-  --bg: #f5f6f8;
-  --surface: #ffffff;
-  --surface-2: #eef0f3;
-  --inset: #e9ecf0;
-  --border: #dee1e6;
-  --border-strong: #c7ccd3;
-  --text: #16181d;
-  --text-muted: #5a616b;
-  --text-faint: #8a919c;
-  --accent: #15616d;
-  --accent-hover: #114e58;
-  --accent-contrast: #ffffff;
-  --focus: rgba(21, 97, 109, 0.4);
-  --danger: #b42318;
-  --warn: #b54708;
-  --ok: #207a4c;
+  /* light — warm paper + ink */
+  --bg: #f4f3ee;
+  --surface: #fbfaf6;
+  --surface-2: #edebe3;
+  --inset: #e7e4da;
+  --border: #ddd9cd;
+  --border-strong: #c4bfaf;
+  --text: #1b1a16;
+  --text-muted: #6c685e;
+  --text-faint: #9d988a;
+  --accent: #1b1a16; /* INK — primary actions + active state */
+  --accent-hover: #000000;
+  --accent-contrast: #fbfaf6;
+  --signal: #a23028; /* oxblood — the turn point, destructive */
+  --signal-soft: rgba(162, 48, 40, 0.1);
+  --focus: rgba(27, 26, 22, 0.32);
+  --danger: #a23028;
+  --warn: #9a6314;
+  --ok: #3f6f4a;
 
   /* data-viz */
-  --zone-rekom: #5b8db8;
-  --zone-ga1: #3e9c8f;
-  --zone-ga2: #a6b24d;
-  --zone-eb: #d99a2b;
-  --zone-sb: #c2543f;
-  --series-lactate: #15616d;
-  --series-hr: #c2693a;
+  --zone-rekom: #6f8fa6;
+  --zone-ga1: #5f8a6a;
+  --zone-ga2: #9a9a4e;
+  --zone-eb: #c08a3c;
+  --zone-sb: #a23028;
+  --series-lactate: #2a2824; /* ink curve — the primary data */
+  --series-hr: #9a6314; /* muted amber */
+  --series-turnpoint: #a23028; /* signal red marks the turn point */
 
-  --shadow-pop: 0 4px 16px rgba(16, 18, 23, 0.12);
-  --shadow-modal: 0 16px 48px rgba(16, 18, 23, 0.24);
+  --shadow-pop: 0 6px 22px rgba(27, 26, 22, 0.13);
+  --shadow-modal: 0 24px 60px rgba(27, 26, 22, 0.26);
 }
 
 :root[data-theme="dark"] {
-  --bg: #0e1014;
-  --surface: #16191f;
-  --surface-2: #1e222a;
-  --inset: #11141a;
-  --border: #272c35;
-  --border-strong: #353b45;
-  --text: #e6e8ec;
-  --text-muted: #9aa2ad;
-  --text-faint: #6b727c;
-  --accent: #4fb3c0;
-  --accent-hover: #6ac5d1;
-  --accent-contrast: #08191c;
-  --focus: rgba(79, 179, 192, 0.45);
-  --danger: #f0795c;
-  --warn: #e5a23b;
-  --ok: #5dbe8a;
-  --zone-rekom: #5b8db8;
-  --zone-ga1: #3e9c8f;
-  --zone-ga2: #a6b24d;
-  --zone-eb: #d99a2b;
-  --zone-sb: #c2543f;
-  --series-lactate: #4fb3c0;
-  --series-hr: #d98a5a;
-  --shadow-pop: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --bg: #131210;
+  --surface: #1a1916;
+  --surface-2: #232120;
+  --inset: #100f0d;
+  --border: #2b2926;
+  --border-strong: #3b3934;
+  --text: #ece9e0;
+  --text-muted: #a09b8f;
+  --text-faint: #6f6a5f;
+  --accent: #ece9e0; /* near-white primary in dark */
+  --accent-hover: #ffffff;
+  --accent-contrast: #131210;
+  --signal: #d65a4e;
+  --signal-soft: rgba(214, 90, 78, 0.16);
+  --focus: rgba(236, 233, 224, 0.4);
+  --danger: #d65a4e;
+  --warn: #d49a3b;
+  --ok: #66b07f;
+  --zone-rekom: #6f8fa6;
+  --zone-ga1: #5f8a6a;
+  --zone-ga2: #9a9a4e;
+  --zone-eb: #c08a3c;
+  --zone-sb: #d65a4e;
+  --series-lactate: #d7d2c6;
+  --series-hr: #d49a3b;
+  --series-turnpoint: #d65a4e;
+  --shadow-pop: 0 6px 22px rgba(0, 0, 0, 0.45);
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.62);
 }

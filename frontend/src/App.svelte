@@ -11,10 +11,10 @@
   import Comparison from "./views/Comparison.svelte";
   import Settings from "./views/Settings.svelte";
 
-  const navItems: { id: "athletes" | "comparison" | "settings"; label: string; icon: string }[] = [
-    { id: "athletes", label: "Athletes", icon: "◍" },
-    { id: "comparison", label: "Comparison", icon: "≋" },
-    { id: "settings", label: "Settings", icon: "⚙" },
+  const navItems: { id: "athletes" | "comparison" | "settings"; label: string }[] = [
+    { id: "athletes", label: "Athletes" },
+    { id: "comparison", label: "Comparison" },
+    { id: "settings", label: "Settings" },
   ];
 
   let platform: Platform = "windows";
@@ -52,7 +52,7 @@
           class:active={$ui.section === item.id}
           on:click={() => setSection(item.id)}
         >
-          <span class="icon">{item.icon}</span>
+          <span class="marker" />
           <span>{item.label}</span>
         </button>
       {/each}
@@ -104,8 +104,8 @@
     gap: var(--space-2);
   }
   .logo {
-    color: var(--accent);
-    font-size: 14px;
+    color: var(--signal);
+    font-size: 13px;
   }
   .name {
     font-weight: 600;
@@ -144,32 +144,35 @@
   .nav-group {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
   }
   .nav-item {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    height: 36px;
-    padding: 0 var(--space-3);
+    height: 32px;
+    padding: 0 var(--space-2);
     border: none;
-    border-radius: var(--radius-md);
     background: transparent;
     color: var(--text-muted);
     text-align: left;
     font-weight: 500;
+    letter-spacing: -0.006em;
+  }
+  .nav-item .marker {
+    width: 2px;
+    height: 13px;
+    background: transparent;
+    flex-shrink: 0;
   }
   .nav-item:hover {
-    background: var(--surface-2);
     color: var(--text);
   }
   .nav-item.active {
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-    color: var(--accent);
+    color: var(--text);
   }
-  .icon {
-    width: 18px;
-    text-align: center;
+  .nav-item.active .marker {
+    background: var(--signal);
   }
   .nav-spacer {
     flex: 1;

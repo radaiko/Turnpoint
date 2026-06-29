@@ -2,6 +2,12 @@
   import { onMount } from "svelte";
   import { App, type Template } from "$lib/api";
   import { toast } from "$lib/stores/toast";
+  import { ui, setRegion } from "$lib/stores/ui";
+  import { formatDate, type Region } from "$lib/format";
+
+  function onRegion(e: Event) {
+    setRegion((e.currentTarget as HTMLSelectElement).value as Region);
+  }
   import Button from "$lib/components/Button.svelte";
   import Field from "$lib/components/Field.svelte";
   import Select from "$lib/components/Select.svelte";
@@ -148,6 +154,32 @@
   <section class="block">
     <header class="block-head">
       <div>
+        <h2>Region</h2>
+        <p class="sub">How dates and numbers are written.</p>
+      </div>
+    </header>
+
+    <div class="card region-card">
+      <Select
+        label="Format"
+        value={$ui.region}
+        on:change={onRegion}
+        options={[
+          { value: "system", label: "Follow system" },
+          { value: "eu", label: "Europe — 31.12.2025 · 1,5" },
+          { value: "us", label: "United States — 12/31/2025 · 1.5" },
+        ]}
+      />
+      <p class="caption">
+        Today reads <span class="mono">{formatDate(new Date().toISOString().slice(0, 10), $ui.region)}</span>.
+        Native date pickers follow your operating system.
+      </p>
+    </div>
+  </section>
+
+  <section class="block">
+    <header class="block-head">
+      <div>
         <h2>Data</h2>
         <p class="sub">Back up or restore your local database.</p>
       </div>
@@ -281,10 +313,14 @@
     border: 1px solid var(--border);
     color: var(--text-faint);
   }
-  .data-card {
+  .data-card,
+  .region-card {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-3);
+  }
+  .region-card {
+    max-width: 440px;
   }
   .data-actions {
     display: flex;

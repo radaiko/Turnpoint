@@ -1,5 +1,7 @@
 import { writable } from "svelte/store";
 
+import type { Region } from "$lib/format";
+
 export type Section = "athletes" | "comparison" | "settings";
 export type Stage = "entry" | "analysis" | "zones" | "report";
 export type Theme = "light" | "dark";
@@ -10,6 +12,7 @@ export interface UIState {
   activeTestId: number | null;
   stage: Stage;
   theme: Theme;
+  region: Region;
 }
 
 function initialTheme(): Theme {
@@ -18,18 +21,29 @@ function initialTheme(): Theme {
   return "dark";
 }
 
+function initialRegion(): Region {
+  const r = localStorage.getItem("tp-region");
+  return r === "eu" || r === "us" ? r : "system";
+}
+
 export const ui = writable<UIState>({
   section: "athletes",
   activeAthleteId: null,
   activeTestId: null,
   stage: "entry",
   theme: initialTheme(),
+  region: initialRegion(),
 });
 
 ui.subscribe((s) => {
   document.documentElement.setAttribute("data-theme", s.theme);
   localStorage.setItem("tp-theme", s.theme);
+  localStorage.setItem("tp-region", s.region);
 });
+
+export function setRegion(region: Region) {
+  ui.update((s) => ({ ...s, region }));
+}
 
 export function toggleTheme() {
   ui.update((s) => ({ ...s, theme: s.theme === "dark" ? "light" : "dark" }));

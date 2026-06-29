@@ -4,7 +4,7 @@
 </script>
 
 <div class="empty">
-  <div class="mark">⊘</div>
+  <div class="rule" />
   <p class="title">{title}</p>
   {#if hint}<p class="hint">{hint}</p>{/if}
   <slot />
@@ -21,17 +21,22 @@
     color: var(--text-muted);
     text-align: center;
   }
-  .mark {
-    font-size: 32px;
-    color: var(--text-faint);
+  .rule {
+    width: 28px;
+    height: 2px;
+    background: var(--signal);
+    margin-bottom: var(--space-1);
   }
   .title {
-    font-size: var(--fs-h3);
+    font-size: var(--fs-body);
     font-weight: 600;
     color: var(--text);
+    letter-spacing: -0.01em;
   }
   .hint {
     font-size: var(--fs-caption);
-    max-width: 40ch;
+    max-width: 38ch;
+    line-height: 1.55;
+    color: var(--text-faint);
   }
 </style>
