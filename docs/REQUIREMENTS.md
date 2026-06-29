@@ -5,7 +5,7 @@
 | **Project** | Turnpoint |
 | **Type** | Lactate threshold analysis (desktop application) |
 | **Status** | Draft |
-| **Version** | 0.3 |
+| **Version** | 0.5 |
 | **License** | Source-available / proprietary (all rights reserved) |
 | **Author** | Aiko |
 
@@ -86,7 +86,7 @@ Assumed context: technically comfortable, desktop-first, values data ownership. 
 - **FR-T1** — Create a test bound to an athlete, with a protocol definition: sport, step duration, intensity increment, starting intensity, and continuous vs. intermittent mode (rest duration if intermittent).
 - **FR-T2** — Record per-step values: intensity, time point, end-of-step heart rate, blood lactate (mmol/L), and optional Borg/RPE.
 - **FR-T3** — Support a resting/baseline row (intensity 0) and an optional pre-test note.
-- **FR-T4** — Intensity unit follows the sport: running = speed (km/h) or pace, cycling = power (W, optionally W/kg), rowing/ski-erg = power or pace, swimming = pace. Pace handling must respect the inverted relationship (lower pace = faster).
+- **FR-T4** — v1 active sports are **Running** (intensity in km/h) and **Cycling** (intensity in W). Pace (min/km) is a *derived* display/output metric (per the reference report), not a primary input unit. Rowing/ski-erg/swimming are deferred (future); when added, pace handling must respect the inverted relationship (lower pace = faster).
 - **FR-T5** — Raw values are entered in a spreadsheet-style grid with the canonical column layout (see Appendix A): **intensity**, **time point** (mm:ss), **HR (bpm)**, **lactate (mmol/L)**, **Borg/RPE**. The intensity column header/unit switches with the active sport (e.g. `[km/h]` for running, `[W]` for cycling). The grid supports keyboard navigation, add/remove/reorder rows, and paste from clipboard.
 - **FR-T6** — Validate input: minimum step count for analysis, flag implausible values, and handle a lactate dip at low intensity and an aborted final step gracefully (e.g. a final step shorter than the protocol step duration).
 - **FR-T7 (Predefined templates)** — Ship predefined entry templates for **Running (Lauf)** and **Cycling (Rad)** that preset the sport, intensity unit, default step duration, default increment, starting intensity, and visible columns (see Appendix B).
@@ -94,7 +94,7 @@ Assumed context: technically comfortable, desktop-first, values data ownership. 
 
 ### 5.3 Curve Fitting
 - **FR-F1** — Fit a lactate-vs-intensity curve from the step data.
-- **FR-F2** — Offer multiple fit strategies, user-selectable: 3rd-order polynomial, exponential, and a smoothing/penalised spline.
+- **FR-F2** — Default curve fit is a **3rd-order polynomial** (standard for lactate step tests; the reference fixed-threshold values are consistent with a fitted curve, not linear interpolation). Alternative fits are user-selectable (exponential, smoothing/penalised spline). Methods that require a specific fit (log-log, Exp-Dmax) use their own canonical fit per §6, independent of the displayed-curve default.
 - **FR-F3** — Guard against non-physiological fits (e.g. non-monotonic wiggle producing spurious local minima); surface a warning when the fit is poorly conditioned.
 - **FR-F4** — Recompute the fit and all dependent thresholds reactively when data changes.
 
@@ -127,7 +127,7 @@ Assumed context: technically comfortable, desktop-first, values data ownership. 
 ### 5.8 Reporting
 - **FR-R1** — Generate a **printable** PDF report for a test (system print dialog + export to PDF).
 - **FR-R2** — Report content blocks: cover + athlete/anamnesis, test remarks, the temporal chart (vector, print quality), the raw step-data table, the threshold results table (FR-D5), the training zones (§7), and an evaluation (Bewertung) section.
-- **FR-R3 (Free configuration)** — The report is **freely configurable**: the user can choose which blocks appear, reorder them, and edit free-text sections (commentary, evaluation). The default layout mirrors the reference report's four-part structure (Appendix C).
+- **FR-R3 (User-editable template blocks)** — The report is composed of **user-editable template blocks** the user can include, omit, reorder, and edit (free-text commentary/evaluation). The **default** report shows the content of the reference report's **page 2** (raw step-data table + temporal chart) and **page 3** (threshold results table + training zones); the cover/anamnesis (page 1) and evaluation (page 4) blocks are optional add-ons.
 - **FR-R4** — Optional custom header/logo and footer. Multi-page, paginated layout.
 - **FR-R5** — Export the chart as an image (PNG/SVG) and results/zones as CSV.
 
@@ -215,15 +215,17 @@ Each zone is output as ranges for intensity (km/h / pace / W), heart rate, lacta
 
 **Stack**
 
-- **Core logic:** Go — threshold models, curve fitting, zone derivation. Fast, testable, packaged as a standalone library/binary.
-- **Frontend:** Svelte — reactive UI, entry grid, interactive chart.
-- **Desktop shell:** Tauri v2 — native window, packaging, cross-platform builds.
-- **Storage:** SQLite — local embedded database.
+- **Application:** **Wails v2** — a single Go binary that hosts a native OS webview. The Go core and the desktop shell are the *same* binary; there is no separate shell process and no IPC/cgo bridge. Frontend calls Go directly via Wails bindings.
+- **Core logic:** Go — threshold models, curve fitting, zone derivation. A standalone, separately-testable package (`turnpoint-core`) imported by the Wails app.
+- **Frontend:** Svelte — reactive UI, entry grid, both chart views; assets embedded into the Go binary at build time.
+- **Storage:** SQLite via a pure-Go driver (`modernc.org/sqlite`) to keep cross-compilation clean and the build cgo-light.
+
+**Why Wails (resolves Open Question #1):** the core is Go and Wails *is* Go, so the Go↔shell integration question disappears — no sidecar, no cgo FFI, one language, one `wails build`. Trade-off accepted: Wails is desktop-first; a future mobile companion (if pursued) will be a separate app rather than this same codebase.
 
 **Build order (bottom-up, risk-first)**
 
-1. **Go threshold-model package** with a test suite validated against `lactater`. Independently useful; the credibility-critical core.
-2. **Svelte + Tauri shell** — data entry, persistence, and the interactive chart on top of the core.
+1. **`turnpoint-core` Go package** with a test suite validated against `lactater`. Independently useful; the credibility-critical core.
+2. **Wails + Svelte shell** — data entry, SQLite persistence, and both chart views on top of the core.
 3. **Report export** — templating and PDF generation last.
 
 **Effort (recalled estimate):** usable MVP (entry → fit → ~8 methods → chart → simple PDF) ≈ 3–4 weeks part-time; polished v1 ≈ 5–7 weeks. Weight concentrates in two places: the **curve-fitting + validation core** and the **report generator**. Everything else is routine.
@@ -250,7 +252,7 @@ Source-available, **all rights reserved**. The repository may be published for r
 | Phase | Deliverable |
 |---|---|
 | P0 | Go core: curve fitting + ~8 threshold methods, validated against `lactater` |
-| P1 | Tauri/Svelte shell: athlete + test CRUD, entry grid, SQLite persistence |
+| P1 | Wails/Svelte shell: athlete + test CRUD, entry grid, SQLite persistence |
 | P2 | Interactive chart with draggable threshold correction; zone derivation |
 | P3 | PDF report generation |
 | P4 | Longitudinal / cross-sectional comparison; remaining methods |
@@ -260,11 +262,13 @@ Source-available, **all rights reserved**. The repository may be published for r
 
 ## 14. Open Questions
 
-1. **Go ↔ Tauri integration** — Go core as a sidecar binary the shell spawns (local IPC/HTTP), via cgo/FFI, or a pure-Go binary with an embedded webview instead of Tauri? Decide before P1; it shapes packaging and the dev loop.
-2. **Default fit strategy** — which fit is the sensible default, and should it vary by method?
-3. **Pace representation** — internal unit (m/s) with pace as a display layer, confirmed across run/row/swim?
+1. ~~Go ↔ Tauri integration~~ — **Resolved:** Go + **Wails v2** (single Go binary, native webview, no bridge). See §10. Mobile companion, if built, will be a separate app.
+2. ~~Default fit strategy~~ — **Resolved:** default 3rd-order polynomial; per-method canonical fits otherwise (FR-F2). Standard markers fixed at 2 & 4 mmol/L; LT1/LT2 freely selectable.
+3. ~~Pace representation~~ — **Resolved:** primary units km/h (running) and W (cycling); pace is a derived display metric. Row/swim deferred (FR-T4).
 4. ~~Zone model defaults~~ — **Resolved:** v1 ships the 5-zone model (§7); 3-zone derivable later.
-5. **Report templating** — fixed layout with merge fields, or user-editable template blocks?
+5. ~~Report templating~~ — **Resolved:** user-editable template blocks; default = reference report pages 2 & 3 (FR-R3).
+
+*All open questions resolved — spec ready for P0.*
 
 ---
 
@@ -288,12 +292,17 @@ Protocol: 3:00 steps, +2 km/h increment, continuous. The 0 km/h row is the resti
 
 ## Appendix B — Predefined Templates
 
-| Template | Sport | Intensity unit | Default step | Default increment | Start | Columns |
-|---|---|---|---|---|---|---|
-| Running (Lauf) | Running | km/h (pace optional) | 3:00 | +2 km/h | 6 km/h | intensity, time, HR, lactate, Borg/RPE |
-| Cycling (Rad) | Cycling | W (W/kg optional) | 3:00 | +20–40 W (configurable) | configurable | intensity, time, HR, lactate, Borg/RPE |
+Default protocols (all values editable per test):
 
-Templates preset the protocol and the visible grid columns. Users can clone a predefined template and save their own variants (FR-T8).
+| Template | Sport | Intensity unit | Step duration | Increment | Start | End | Steps |
+|---|---|---|---|---|---|---|---|
+| Running (Lauf) | Running | km/h | 3:00 | +2 km/h | 6 km/h | 22 km/h | 9 |
+| Cycling (Rad) | Cycling | W | 4:00 | +40 W | 80 W | 440 W | 10 |
+
+- **Running default:** 6, 8, 10, 12, 14, 16, 18, 20, 22 km/h — each step 3:00.
+- **Cycling default:** 80, 120, 160, 200, 240, 280, 320, 360, 400, 440 W — each step 4:00.
+
+Both templates use the canonical column set (intensity, time, HR, lactate, Borg/RPE). Templates preset the protocol and visible columns; users can clone a predefined template and save their own variants (FR-T8), and any field can be changed per test.
 
 ## Appendix C — Reference Report (mesics "Lactate EXPRESS")
 
