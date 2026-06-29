@@ -10,6 +10,17 @@
 
 **Tech Stack:** Go 1.26 · gonum v0.15.x · Wails v2.12 · Svelte + Vite + TS · modernc.org/sqlite · maroto/v2 + tdewolff/canvas (PDF/export fallback) · LayerCake + d3-scale + d3-shape · Geist Sans/Mono (self-hosted).
 
+> **Status (2026-06-29): v1 implemented.** P0 (core) through P3 (reporting)
+> complete — `go test ./...` green (13 packages incl. Appendix C parity + the
+> `app_test.go` binding happy path), frontend `svelte-check` 0/0, `wails build`
+> packages `Turnpoint.app`. Deviations & deferrals, all documented: OBLA/Bsln+
+> pin a **monotone spline** (not the LS cubic) to match the WinLactat reference
+> (finding recorded in REQUIREMENTS FR-F2); **PDF** uses the webview
+> print-to-PDF path (maroto/tdewolff fallback not yet wired); chart **fonts** use
+> a system stack (Geist woff2 deferred — offline-safe); **P4** (the `lactater`
+> golden layer + non-Leistung training profiles, OI-16/17) is R-gated and
+> deferred. Remaining: visual/interactive QA of the GUI (not possible headless).
+
 ## Global Constraints
 
 - **Module path** `github.com/radaiko/turnpoint`; `go 1.23` floor, toolchain 1.26. ONE module.
