@@ -293,9 +293,20 @@ their own canonical fit per §6, independent of the displayed-curve default.
 
 *Acceptance criteria*
 - Changing the displayed fit does not change a method that pins its own fit.
-- The fixed-threshold values for the Appendix A data, computed on the default
-  3rd-order polynomial, reproduce the Appendix C parity targets within the OI-1
-  tolerance.
+- The fixed-threshold values for the Appendix A data reproduce the Appendix C
+  parity targets within the OI-1 tolerance.
+
+> **Implementation finding (P0.4):** Empirically (via `cmd/probe` against the
+> Appendix A data) the WinLactat report's fixed thresholds (13.1 / 16.1 / 17.6
+> km/h for 2 / 4 / 6 mmol/L) are reproduced by a **monotone interpolating spline**
+> through the measured points, **not** by a least-squares 3rd-order polynomial
+> (which smooths the points and yields ≈15.8 km/h for 4 mmol/L). The parenthetical
+> claim above — that the reference values are "consistent with a fitted [cubic]
+> curve" — is therefore **incorrect**. Resolution: the 3rd-order polynomial remains
+> the user-facing **default display** fit (per the SRS), but the fixed-concentration
+> methods (OBLA, Bsln+) **pin the monotone spline** as their canonical fit (FR-D4),
+> which reproduces the Appendix C anchors within the OI-1 tolerance (OBLA 6.0 at
+> 17.43 sits inside the 1 %-relative bound of 17.6). See `core/threshold/obla.go`.
 
 #### FR-F3 — Guard against non-physiological fits
 The system **shall** detect and warn when a fit is poorly conditioned or
