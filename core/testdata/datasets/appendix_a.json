@@ -1,0 +1,19 @@
+{
+  "sport": "running",
+  "stepDurationSec": 180,
+  "increment": 2,
+  "startIntensity": 6,
+  "mode": "continuous",
+  "bodyMassKg": 0,
+  "steps": [
+    {"intensity": 0,  "timeSec": 0,    "hr": 0,   "lactate": 0.00, "hasLactate": true, "rpe": 6},
+    {"intensity": 6,  "timeSec": 180,  "hr": 98,  "lactate": 1.24, "hasLactate": true, "rpe": 6},
+    {"intensity": 8,  "timeSec": 360,  "hr": 111, "lactate": 1.19, "hasLactate": true, "rpe": 6},
+    {"intensity": 10, "timeSec": 540,  "hr": 120, "lactate": 1.32, "hasLactate": true, "rpe": 6},
+    {"intensity": 12, "timeSec": 720,  "hr": 131, "lactate": 1.66, "hasLactate": true, "rpe": 6},
+    {"intensity": 14, "timeSec": 900,  "hr": 149, "lactate": 2.38, "hasLactate": true, "rpe": 6},
+    {"intensity": 16, "timeSec": 1080, "hr": 166, "lactate": 3.89, "hasLactate": true, "rpe": 6},
+    {"intensity": 18, "timeSec": 1260, "hr": 180, "lactate": 6.66, "hasLactate": true, "rpe": 6},
+    {"intensity": 20, "timeSec": 1330, "hr": 185, "lactate": 7.74, "hasLactate": true, "rpe": 6, "aborted": true}
+  ]
+}
