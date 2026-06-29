@@ -1,0 +1,11 @@
+{
+  "_source": "mesics Lactate EXPRESS / WinLactat report for the Appendix A dataset (athlete Bogner Markus, 01.02.2025). FROZEN ground truth — SRS Appendix C.",
+  "markers": [
+    {"marker": "OBLA 2.0", "kmh": 13.1, "lactate": 2.0, "hr": 140, "pctMax": 65.5, "pace": "04:34"},
+    {"marker": "OBLA 4.0", "kmh": 16.1, "lactate": 4.0, "hr": 167, "pctMax": 80.5, "pace": "03:43"},
+    {"marker": "OBLA 6.0", "kmh": 17.6, "lactate": 6.0, "hr": 177, "pctMax": 87.8, "pace": "03:25"},
+    {"marker": "IAS",      "kmh": 10.5, "lactate": 1.4, "hr": 122, "pctMax": 52.7, "pace": "05:41"},
+    {"marker": "IANS",     "kmh": 16.1, "lactate": 4.0, "hr": 167, "pctMax": 80.5, "pace": "03:43"},
+    {"marker": "MAX",      "kmh": 20.0, "lactate": 7.7, "hr": 185, "pctMax": 100.0, "pace": "03:00"}
+  ]
+}

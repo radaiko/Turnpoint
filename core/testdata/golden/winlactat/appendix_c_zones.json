@@ -1,0 +1,12 @@
+{
+  "_source": "WinLactat reference zones, profile 'Laufen Leistungssportler 6×/Woche', for the Appendix A dataset (IANS = 16.1 km/h). SRS Appendix C / §7.",
+  "profile": "Laufen Leistungssportler (6×/Woche)",
+  "iansKmh": 16.1,
+  "zones": [
+    {"zone": "REKOM", "lowPct": 0.00, "highPct": 0.46, "kmhLow": 0.0,  "kmhHigh": 7.4,  "lactateLow": 0.0, "lactateHigh": 1.2, "hrLow": 0,   "hrHigh": 107},
+    {"zone": "GA1",   "lowPct": 0.46, "highPct": 0.70, "kmhLow": 7.4,  "kmhHigh": 11.3, "lactateLow": 1.2, "lactateHigh": 1.5, "hrLow": 107, "hrHigh": 126},
+    {"zone": "GA2",   "lowPct": 0.70, "highPct": 0.88, "kmhLow": 11.3, "kmhHigh": 14.2, "lactateLow": 1.5, "lactateHigh": 2.5, "hrLow": 126, "hrHigh": 150},
+    {"zone": "EB",    "lowPct": 0.88, "highPct": 1.02, "kmhLow": 14.2, "kmhHigh": 16.4, "lactateLow": 2.5, "lactateHigh": 4.4, "hrLow": 150, "hrHigh": 169},
+    {"zone": "SB",    "lowPct": 1.02, "highPct": 1.25, "kmhLow": 16.4, "kmhHigh": 20.1, "lactateLow": 4.4, "lactateHigh": 7.7, "hrLow": 169, "hrHigh": 185}
+  ]
+}
