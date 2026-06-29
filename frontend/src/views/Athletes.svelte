@@ -24,17 +24,17 @@
 
   onMount(async () => {
     await load();
-    templates = await App.ListTemplates();
+    templates = (await App.ListTemplates()) ?? [];
   });
 
   async function load() {
-    athletes = await App.ListAthletes(search);
+    athletes = (await App.ListAthletes(search)) ?? [];
   }
 
   async function selectAthlete(id: number) {
     selectedId = id;
     selected = await App.GetAthlete(id);
-    tests = await App.ListTests(id);
+    tests = (await App.ListTests(id)) ?? [];
   }
 
   function newAthlete() {
@@ -54,7 +54,13 @@
       toast("Name is required", "warn");
       return;
     }
-    const id = await App.SaveAthlete(editing);
+    // Coerce the optional numeric body mass: "" / null → omitted (Go nil), else a number.
+    const bm = (editing as any).bodyMassKg;
+    const payload: any = {
+      ...editing,
+      bodyMassKg: bm === "" || bm === null || bm === undefined || isNaN(Number(bm)) ? undefined : Number(bm),
+    };
+    const id = await App.SaveAthlete(payload);
     showAthleteModal = false;
     await load();
     await selectAthlete(id);

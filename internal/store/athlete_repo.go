@@ -61,7 +61,7 @@ func (r *AthleteRepo) List(ctx context.Context, search string) ([]AthleteSummary
 		return nil, err
 	}
 	defer rows.Close()
-	var out []AthleteSummary
+	out := []AthleteSummary{}
 	for rows.Next() {
 		var s AthleteSummary
 		if err := rows.Scan(&s.ID, &s.Name, &s.PrimarySport, &s.LastTestDate, &s.TestCount); err != nil {

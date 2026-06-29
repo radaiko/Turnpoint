@@ -48,7 +48,7 @@ func (r *StepRepo) ListByTest(ctx context.Context, testID int64) ([]Step, error)
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Step
+	out := []Step{}
 	for rows.Next() {
 		var s Step
 		var base, excl, abort int

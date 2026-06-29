@@ -56,6 +56,8 @@ func StoreToDomain(t store.Test, steps []store.Step) domain.Test {
 func BuildAnalysisDTO(res analysis.Result, dt domain.Test) AnalysisDTO {
 	sport := dt.Protocol.Sport
 	lo, hi := res.DisplayFit.Domain()
+	// All slice fields are initialised non-nil so they marshal to JSON [] rather
+	// than null — a null would break Svelte {#each} in the consuming views.
 	dto := AnalysisDTO{
 		Sport:        sport.String(),
 		Unit:         sport.Unit().Symbol(),
@@ -63,6 +65,15 @@ func BuildAnalysisDTO(res analysis.Result, dt domain.Test) AnalysisDTO {
 		MaxIntensity: res.MaxIntensity,
 		DomainLow:    lo,
 		DomainHigh:   hi,
+		RawPoints:    []XY{},
+		Curve:        []XY{},
+		HRPoints:     []XY{},
+		TimeHR:       []XY{},
+		TimeLactate:  []XY{},
+		StepBars:     []StepBar{},
+		Markers:      []MarkerRow{},
+		Zones:        []ZoneDTO{},
+		Warnings:     []WarningDTO{},
 	}
 	// raw points + HR/time series + step bars
 	for _, s := range dt.Steps {

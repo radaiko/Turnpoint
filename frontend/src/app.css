@@ -22,6 +22,10 @@ body {
   text-rendering: optimizeLegibility;
   overflow: hidden;
   user-select: none;
+  /* Baseline: nothing is a window-drag region (so all content is clickable).
+     The titlebar opts INTO drag explicitly. Without this, unset regions are
+     treated as draggable in the frameless window and swallow clicks. */
+  --wails-draggable: no-drag;
 }
 
 .mono,

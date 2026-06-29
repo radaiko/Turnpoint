@@ -28,7 +28,7 @@ func (r *TemplateRepo) List(ctx context.Context) ([]Template, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Template
+	out := []Template{}
 	for rows.Next() {
 		var t Template
 		var pre int
@@ -97,7 +97,7 @@ func (r *ProfileRepo) List(ctx context.Context, sport string) ([]TrainingProfile
 		return nil, err
 	}
 	defer rows.Close()
-	var out []TrainingProfile
+	out := []TrainingProfile{}
 	for rows.Next() {
 		var p TrainingProfile
 		var pre int

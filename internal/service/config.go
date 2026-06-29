@@ -36,7 +36,7 @@ type MarkerOption struct {
 
 // AllMarkerOptions lists every marker and its required fit (FR-D2/D4).
 func AllMarkerOptions() []MarkerOption {
-	var out []MarkerOption
+	out := []MarkerOption{}
 	methods := map[threshold.Marker]threshold.ThresholdMethod{}
 	for _, m := range threshold.Default() {
 		methods[m.Marker()] = m
@@ -75,6 +75,7 @@ func FromConfig(cfg analysis.Config, profileName string) AnalysisConfigDTO {
 		LT2Anchor:            cfg.LT2Anchor.String(),
 		ProfileName:          profileName,
 		MethodParams:         map[string]MethodParamDTO{},
+		EnabledMarkers:       []string{},
 	}
 	for _, m := range cfg.EnabledMarkers {
 		dto.EnabledMarkers = append(dto.EnabledMarkers, m.String())
@@ -143,7 +144,7 @@ type ProfileOption struct {
 // ProfileOptionsForSport lists the predefined profiles for a sport (FR-Z5).
 func ProfileOptionsForSport(sport string) []ProfileOption {
 	want := ParseSport(sport)
-	var out []ProfileOption
+	out := []ProfileOption{}
 	for _, p := range zone.Predefined() {
 		if p.Sport == want {
 			out = append(out, ProfileOption{Name: p.Name, Sport: p.Sport.String(), Calibrated: p.Calibrated})

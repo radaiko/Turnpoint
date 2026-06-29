@@ -71,7 +71,7 @@ func (r *TestRepo) ListByAthlete(ctx context.Context, athleteID int64) ([]Test, 
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Test
+	out := []Test{}
 	for rows.Next() {
 		var t Test
 		if err := rows.Scan(&t.ID, &t.AthleteID, &t.TestDate, &t.Sport, &t.StepDurationS, &t.Increment, &t.StartIntensity,

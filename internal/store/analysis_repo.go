@@ -45,7 +45,7 @@ func (r *ThresholdRepo) ListByTest(ctx context.Context, testID int64) ([]Thresho
 		return nil, err
 	}
 	defer rows.Close()
-	var out []ThresholdResult
+	out := []ThresholdResult{}
 	for rows.Next() {
 		var t ThresholdResult
 		var ovr int
@@ -100,7 +100,7 @@ func (r *ZoneRepo) ListByTest(ctx context.Context, testID int64) ([]Zone, error)
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Zone
+	out := []Zone{}
 	for rows.Next() {
 		var z Zone
 		if err := rows.Scan(&z.ID, &z.TestID, &z.Model, &z.ZoneIndex, &z.ZoneName, &z.ProfileID,

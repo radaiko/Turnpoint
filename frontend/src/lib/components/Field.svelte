@@ -1,7 +1,10 @@
 <script lang="ts">
   export let label = "";
-  // generic form wrapper: value may be string | number | undefined depending on the bound field
-  export let value: any = "";
+  // generic form wrapper: value may be string | number | undefined depending on
+  // the bound field. Default undefined (NOT "") so an untouched numeric field
+  // stays undefined rather than becoming the string "" — which would fail to
+  // unmarshal into a Go float64.
+  export let value: any = undefined;
   export let type: "text" | "number" | "date" = "text";
   export let placeholder = "";
   export let suffix = "";
