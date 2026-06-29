@@ -16,5 +16,6 @@
     "moduleResolution": "bundler",
     "strict": true
   },
-  "include": ["src/**/*.ts", "src/**/*.svelte", "wailsjs/**/*.ts", "wailsjs/**/*.js"]
+  "include": ["src/**/*.ts", "src/**/*.svelte", "wailsjs/**/*.ts", "wailsjs/**/*.d.ts"],
+  "exclude": ["wailsjs/**/*.js", "node_modules", "dist"]
 }
