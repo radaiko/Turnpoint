@@ -10,3 +10,7 @@ frontend/dist/
 
 # OS
 .DS_Store
+
+# eval artifacts
+*.png
+.playwright-mcp/

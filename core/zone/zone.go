@@ -27,17 +27,22 @@ type Zone struct {
 // cheap (FR-C2). ias is accepted for future spread rules.
 func Derive(p TrainingProfile, ias, ians float64, curve fit.Fit, hr metrics.HRCurve, sport unit.Sport) []Zone {
 	_ = ias
+	dlo, dhi := curve.Domain()
 	zones := make([]Zone, 0, len(p.Bands))
 	for _, b := range p.Bands {
 		lo := b.LowPct * ians
 		hi := b.HighPct * ians
+		// The intensity bounds are reported as-is, but lactate/HR are read off the
+		// curve at intensities CLAMPED to the fitted domain — evaluating the fit
+		// below the lowest tested step (e.g. REKOM's 0 km/h bound) would otherwise
+		// extrapolate the polynomial to a nonsensical value (review: REKOM bug).
 		z := Zone{
 			Index:         b.Zone,
 			Label:         label(b.Zone, p.GermanLabels),
 			IntensityLow:  lo,
 			IntensityHigh: hi,
-			LactateLow:    curve.Predict(lo),
-			LactateHigh:   curve.Predict(hi),
+			LactateLow:    curve.Predict(clamp(lo, dlo, dhi)),
+			LactateHigh:   curve.Predict(clamp(hi, dlo, dhi)),
 			HRLow:         hr.At(lo),
 			HRHigh:        hr.At(hi),
 		}
@@ -48,6 +53,16 @@ func Derive(p TrainingProfile, ias, ians float64, curve fit.Fit, hr metrics.HRCu
 		zones = append(zones, z)
 	}
 	return zones
+}
+
+func clamp(v, lo, hi float64) float64 {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
 }
 
 func label(i Index, german bool) string {

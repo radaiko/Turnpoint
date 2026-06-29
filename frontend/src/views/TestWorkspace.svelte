@@ -1,7 +1,16 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { get } from "svelte/store";
   import { ui, setStage, type Stage } from "$lib/stores/ui";
-  import { analysis } from "$lib/stores/analysis";
+  import { analysis, ensureAnalysis } from "$lib/stores/analysis";
   import Button from "$lib/components/Button.svelte";
+
+  // Run the analysis once when the workspace opens so Analysis/Zones/Report all
+  // have data regardless of which stage the user visits first.
+  onMount(() => {
+    const id = get(ui).activeTestId;
+    if (id) ensureAnalysis(id);
+  });
   import TestEntry from "./TestEntry.svelte";
   import Analysis from "./Analysis.svelte";
   import Zones from "./Zones.svelte";

@@ -1,9 +1,14 @@
 // Thin typed facade over the generated Wails bindings. Views import from here so
-// the binding paths live in one place (the one mock seam).
-import * as App from "$wails/go/main/App";
+// the binding paths live in one place (the one mock seam). When running outside
+// the Wails runtime (plain browser `npm run dev`), fall back to mock data.
+import * as realApp from "$wails/go/main/App";
 import { service, store, csvio } from "$wails/go/models";
+import { mockApp } from "./mock";
 
-export { App };
+const wailsReady =
+  typeof window !== "undefined" && !!(window as any).go?.main?.App;
+
+export const App = (wailsReady ? realApp : mockApp) as typeof realApp;
 
 export type AnalysisDTO = service.AnalysisDTO;
 export type MarkerRow = service.MarkerRow;

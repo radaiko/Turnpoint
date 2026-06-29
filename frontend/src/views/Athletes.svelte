@@ -240,6 +240,7 @@
   }
   .nm {
     font-weight: 500;
+    color: var(--text);
   }
   .meta {
     font-size: var(--fs-caption);
