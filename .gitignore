@@ -1,0 +1,12 @@
+# Go
+/Turnpoint
+/build/bin
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+*.log
+
+# OS
+.DS_Store
