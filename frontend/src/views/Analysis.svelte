@@ -2,10 +2,14 @@
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { analysis, analyzing, runAnalysis, recomputeZones } from "$lib/stores/analysis";
+  import { config, markerOptions, applyConfig, resetConfig } from "$lib/stores/config";
   import { ui } from "$lib/stores/ui";
+  import { toast } from "$lib/stores/toast";
   import { num, intStr } from "$lib/format";
   import FitChart from "$lib/charts/FitChart.svelte";
   import Button from "$lib/components/Button.svelte";
+  import Select from "$lib/components/Select.svelte";
+  import Field from "$lib/components/Field.svelte";
   import EmptyState from "$lib/components/EmptyState.svelte";
 
   onMount(() => {
@@ -27,6 +31,62 @@
     return "var(--text-muted)";
   }
 
+  // --- Configuration panel (FR-D2/F2) ---
+  let configOpen = false;
+
+  const fitOptions = [
+    { value: "poly3", label: "Polynomial (3)" },
+    { value: "exp", label: "Exponential" },
+    { value: "spline", label: "Spline" },
+  ];
+
+  const isObla = (name: string) => name.startsWith("OBLA");
+  const isBsln = (name: string) => name.startsWith("Bsln");
+
+  // Default OBLA concentration / baseline delta derive from the marker name
+  // (e.g. "OBLA 4.0" → 4.0, "Bsln+1.5" → 1.5) when no override is stored.
+  function numFromName(name: string): number {
+    const m = name.match(/\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : 0;
+  }
+
+  function toggleMarker(name: string) {
+    config.update((c) => {
+      if (!c) return c;
+      const enabled = c.enabledMarkers.includes(name)
+        ? c.enabledMarkers.filter((n) => n !== name)
+        : [...c.enabledMarkers, name];
+      return { ...c, enabledMarkers: enabled } as typeof c;
+    });
+  }
+
+  function setParam(name: string, key: "oblaConc" | "baselineDelta", e: Event) {
+    const v = parseFloat((e.target as HTMLInputElement).value);
+    if (!isFinite(v)) return;
+    config.update((c) => {
+      if (!c) return c;
+      const mp = { ...c.methodParams };
+      const cur = mp[name] ?? { oblaConc: numFromName(name), baselineDelta: numFromName(name) };
+      mp[name] = { ...cur, [key]: v } as any;
+      return { ...c, methodParams: mp } as typeof c;
+    });
+  }
+
+  async function apply() {
+    if (!$ui.activeTestId) return;
+    await applyConfig($ui.activeTestId);
+    toast("Configuration applied", "ok");
+  }
+
+  async function reset() {
+    if (!$ui.activeTestId) return;
+    await resetConfig($ui.activeTestId);
+    toast("Reset to defaults", "ok");
+  }
+
+  // Markers exposing an editable concentration / baseline-delta parameter.
+  $: advancedMarkers = $markerOptions.filter((o) => isObla(o.name) || isBsln(o.name));
+
   // Convenience alias for the current DTO.
   $: a = $analysis;
 </script>
@@ -46,6 +106,92 @@
     <div class="chart-panel">
       <FitChart data={a} {onAnchorDrag} />
     </div>
+
+    <!-- Configuration (FR-D2/F2): collapsible, default collapsed -->
+    <section class="config-card">
+      <button
+        class="config-head"
+        type="button"
+        aria-expanded={configOpen}
+        on:click={() => (configOpen = !configOpen)}
+      >
+        <div class="config-title">
+          <span class="chev" class:open={configOpen}>▸</span>
+          <h3>Configuration</h3>
+        </div>
+        <span class="config-sub mono">{$config?.profileName ?? "—"}</span>
+      </button>
+
+      {#if configOpen}
+        {#if $config}
+          <div class="config-body">
+            <div class="config-row">
+              <Select label="Display fit" options={fitOptions} bind:value={$config.displayFit} />
+              <label class="toggle">
+                <input type="checkbox" bind:checked={$config.includeBaselineInFit} />
+                <span>Include baseline in fit</span>
+              </label>
+            </div>
+
+            <div class="config-section">
+              <span class="config-label">Methods</span>
+              <div class="markers-list">
+                {#each $markerOptions as o (o.name)}
+                  <label class="marker-toggle">
+                    <input
+                      type="checkbox"
+                      checked={$config.enabledMarkers.includes(o.name)}
+                      on:change={() => toggleMarker(o.name)}
+                    />
+                    <span class="mk-name">{o.name}</span>
+                    <span class="mk-fit">{o.fitType}</span>
+                  </label>
+                {/each}
+              </div>
+            </div>
+
+            {#if advancedMarkers.length}
+              <details class="advanced">
+                <summary>Advanced · concentrations &amp; baseline deltas</summary>
+                <div class="params-list">
+                  {#each advancedMarkers as o (o.name)}
+                    <div class="param-row">
+                      <span class="param-name mono">{o.name}</span>
+                      {#if isObla(o.name)}
+                        <Field
+                          type="number"
+                          step="0.1"
+                          suffix="mmol/L"
+                          value={$config.methodParams?.[o.name]?.oblaConc ?? numFromName(o.name)}
+                          on:change={(e) => setParam(o.name, "oblaConc", e)}
+                        />
+                      {:else}
+                        <Field
+                          type="number"
+                          step="0.1"
+                          suffix="Δ mmol/L"
+                          value={$config.methodParams?.[o.name]?.baselineDelta ?? numFromName(o.name)}
+                          on:change={(e) => setParam(o.name, "baselineDelta", e)}
+                        />
+                      {/if}
+                    </div>
+                  {/each}
+                </div>
+              </details>
+            {/if}
+          </div>
+
+          <div class="config-footer">
+            <Button variant="primary" on:click={apply}>Apply</Button>
+            <Button variant="subtle" on:click={reset}>Reset to defaults</Button>
+          </div>
+        {:else}
+          <div class="config-body">
+            <p class="config-empty">Configuration not loaded.</p>
+          </div>
+        {/if}
+      {/if}
+    </section>
 
     <!-- Anchors: IAS (LT1) / IANS (LT2) (FR-D5) -->
     <section class="block">
@@ -184,6 +330,170 @@
     background: var(--surface);
     padding: var(--space-3);
     overflow: hidden;
+  }
+
+  /* Configuration panel */
+  .config-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .config-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+  .config-head:hover {
+    background: var(--surface-2);
+  }
+  .config-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .config-title h3 {
+    margin: 0;
+    font-size: var(--fs-h3);
+    color: var(--text);
+  }
+  .chev {
+    display: inline-block;
+    color: var(--text-faint);
+    font-size: var(--fs-caption);
+    transition: transform 150ms ease;
+  }
+  .chev.open {
+    transform: rotate(90deg);
+  }
+  .config-sub {
+    font-size: var(--fs-caption);
+    color: var(--text-faint);
+  }
+  .config-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    border-top: 1px solid var(--border);
+  }
+  .config-empty {
+    margin: 0;
+    font-size: var(--fs-caption);
+    color: var(--text-faint);
+  }
+  .config-row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+  }
+  .config-row :global(.field) {
+    min-width: 200px;
+  }
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: 32px;
+    cursor: pointer;
+    font-size: var(--fs-body);
+    color: var(--text);
+  }
+  .toggle input,
+  .marker-toggle input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent);
+  }
+  .config-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .config-label {
+    font-size: var(--fs-label);
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+  .markers-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-1) var(--space-3);
+    max-height: 220px;
+    overflow: auto;
+    padding: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+  .marker-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--fs-body);
+    color: var(--text);
+  }
+  .marker-toggle:hover {
+    background: var(--surface);
+  }
+  .mk-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mk-fit {
+    font-size: var(--fs-eyebrow);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    background: var(--inset);
+    color: var(--text-faint);
+  }
+  .advanced {
+    border-top: 1px solid var(--border);
+    padding-top: var(--space-3);
+  }
+  .advanced summary {
+    cursor: pointer;
+    font-size: var(--fs-label);
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+  .params-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+  .param-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .param-name {
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
+  }
+  .config-footer {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
   }
 
   .block {

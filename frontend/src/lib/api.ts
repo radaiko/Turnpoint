@@ -17,6 +17,32 @@ export type ZoneDTO = service.ZoneDTO;
 export type XY = service.XY;
 export type StepBar = service.StepBar;
 export type WarningDTO = service.WarningDTO;
+// Config-related DTOs are declared as plain interfaces (not the generated Wails
+// classes) so they can be spread/cloned in stores without losing class methods.
+export interface MethodParamDTO {
+  oblaConc: number;
+  baselineDelta: number;
+}
+export interface AnalysisConfigDTO {
+  displayFit: string;
+  includeBaselineInFit: boolean;
+  enabledMarkers: string[];
+  methodParams: Record<string, MethodParamDTO>;
+  lt1Anchor: string;
+  lt2Anchor: string;
+  lt1Override?: number;
+  lt2Override?: number;
+  profileName: string;
+}
+export interface MarkerOption {
+  name: string;
+  fitType: string;
+}
+export interface ProfileOption {
+  name: string;
+  sport: string;
+  calibrated: boolean;
+}
 
 export type Athlete = store.Athlete;
 export type AthleteSummary = store.AthleteSummary;

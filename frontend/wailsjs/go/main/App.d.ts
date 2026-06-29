@@ -6,15 +6,25 @@ import {csvio} from '../models';
 
 export function Analyze(arg1:number):Promise<service.AnalysisDTO>;
 
-export function Backup(arg1:string):Promise<void>;
+export function AnalyzeWith(arg1:number,arg2:service.AnalysisConfigDTO):Promise<service.AnalysisDTO>;
+
+export function BackupDatabase():Promise<string>;
 
 export function DeleteAthlete(arg1:number):Promise<void>;
+
+export function DeleteTemplate(arg1:number):Promise<void>;
 
 export function DeleteTest(arg1:number):Promise<void>;
 
 export function ExportCSV(arg1:number):Promise<string>;
 
+export function GetAnalysisConfig(arg1:number):Promise<service.AnalysisConfigDTO>;
+
 export function GetAthlete(arg1:number):Promise<store.Athlete>;
+
+export function GetMarkerOptions():Promise<Array<service.MarkerOption>>;
+
+export function GetProfileOptions(arg1:string):Promise<Array<service.ProfileOption>>;
 
 export function GetSteps(arg1:number):Promise<Array<store.Step>>;
 
@@ -34,8 +44,14 @@ export function ParsePaste(arg1:string):Promise<Array<store.Step>>;
 
 export function RecomputeZones(arg1:number,arg2:number,arg3:number):Promise<service.AnalysisDTO>;
 
+export function ResetAnalysisConfig(arg1:number):Promise<service.AnalysisDTO>;
+
+export function RestoreDatabase():Promise<string>;
+
 export function SaveAthlete(arg1:store.Athlete):Promise<number>;
 
 export function SaveSteps(arg1:number,arg2:Array<store.Step>):Promise<void>;
+
+export function SaveTemplate(arg1:store.Template):Promise<number>;
 
 export function SaveTest(arg1:store.Test):Promise<number>;

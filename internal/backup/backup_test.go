@@ -2,7 +2,7 @@ package backup
 
 import (
 	"context"
-	"database/sql"
+
 	"path/filepath"
 	"testing"
 
@@ -31,13 +31,9 @@ func TestBackupRestore(t *testing.T) {
 	}
 	db.Close()
 
-	reopened, err := Restore(dbPath, bak, func(p string) (*sql.DB, error) {
-		return sql.Open("sqlite", "file:"+p+"?_pragma=foreign_keys(1)")
-	})
-	if err != nil {
+	if err := Restore(dbPath, bak); err != nil {
 		t.Fatalf("restore: %v", err)
 	}
-	reopened.Close()
 
 	// verify via the repository layer
 	verify, err := store.Open(dbPath)

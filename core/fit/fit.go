@@ -27,6 +27,26 @@ const (
 	KindNone      // MAX: no fit
 )
 
+// KindFromString resolves a fit kind from its string form, defaulting to Poly3.
+func KindFromString(s string) Kind {
+	switch s {
+	case "poly4":
+		return KindPoly4
+	case "exp":
+		return KindExp
+	case "spline":
+		return KindSpline
+	case "loglog":
+		return KindLogLog
+	case "segmented":
+		return KindSegmented
+	case "none":
+		return KindNone
+	default:
+		return KindPoly3
+	}
+}
+
 func (k Kind) String() string {
 	switch k {
 	case KindPoly3:

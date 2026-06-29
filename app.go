@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,12 +12,11 @@ import (
 	"github.com/radaiko/turnpoint/core/analysis"
 	"github.com/radaiko/turnpoint/core/domain"
 	"github.com/radaiko/turnpoint/core/threshold"
-	"github.com/radaiko/turnpoint/core/unit"
-	"github.com/radaiko/turnpoint/core/zone"
 	"github.com/radaiko/turnpoint/internal/backup"
 	"github.com/radaiko/turnpoint/internal/csvio"
 	"github.com/radaiko/turnpoint/internal/service"
 	"github.com/radaiko/turnpoint/internal/store"
+	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App is the Wails-bound facade: its exported methods are callable from the
@@ -101,16 +101,78 @@ func (a *App) SaveSteps(testID int64, steps []store.Step) error {
 
 // ── Catalog (FR-T7/T8, FR-Z5) ───────────────────────────────────────────────
 
-func (a *App) ListTemplates() ([]store.Template, error)             { return a.db.Templates().List(a.ctx) }
+func (a *App) ListTemplates() ([]store.Template, error) { return a.db.Templates().List(a.ctx) }
 func (a *App) ListProfiles(sport string) ([]store.TrainingProfile, error) {
 	return a.db.Profiles().List(a.ctx, sport)
 }
 
+// SaveTemplate creates (id==0) or updates a user template (FR-T8). Predefined
+// templates are read-only and rejected on update.
+func (a *App) SaveTemplate(t store.Template) (int64, error) {
+	if t.ID == 0 {
+		return a.db.Templates().Create(a.ctx, t)
+	}
+	return t.ID, a.db.Templates().Update(a.ctx, t)
+}
+
+// DeleteTemplate removes a user template (predefined are protected).
+func (a *App) DeleteTemplate(id int64) error { return a.db.Templates().Delete(a.ctx, id) }
+
 // ── Analysis (FR-D/Z/C) ─────────────────────────────────────────────────────
 
-// Analyze runs the full pipeline for a test, persists the snapshot rows, caches
-// the result for the drag fast path, and returns the frontend payload.
+// Analyze runs the full pipeline for a test using its persisted (or default)
+// configuration, persists the snapshot rows, caches the result for the drag fast
+// path, and returns the frontend payload.
 func (a *App) Analyze(testID int64) (service.AnalysisDTO, error) {
+	dto, err := a.GetAnalysisConfig(testID)
+	if err != nil {
+		return service.AnalysisDTO{}, err
+	}
+	return a.analyzeInternal(testID, dto)
+}
+
+// AnalyzeWith runs the pipeline with an explicit configuration and persists it as
+// this test's analysis config (FR-D2/F2/Z2/Z5).
+func (a *App) AnalyzeWith(testID int64, cfg service.AnalysisConfigDTO) (service.AnalysisDTO, error) {
+	if j, err := json.Marshal(cfg); err == nil {
+		_ = a.db.Configs().Upsert(a.ctx, testID, string(j))
+	}
+	return a.analyzeInternal(testID, cfg)
+}
+
+// GetAnalysisConfig returns the persisted config for a test, or the sport default.
+func (a *App) GetAnalysisConfig(testID int64) (service.AnalysisConfigDTO, error) {
+	test, err := a.db.Tests().Get(a.ctx, testID)
+	if err != nil {
+		return service.AnalysisConfigDTO{}, err
+	}
+	if j, ok, _ := a.db.Configs().Get(a.ctx, testID); ok {
+		var dto service.AnalysisConfigDTO
+		if err := json.Unmarshal([]byte(j), &dto); err == nil {
+			return dto, nil
+		}
+	}
+	return service.DefaultConfigDTO(test.Sport), nil
+}
+
+// ResetAnalysisConfig discards a test's saved config and reverts to the default.
+func (a *App) ResetAnalysisConfig(testID int64) (service.AnalysisDTO, error) {
+	test, err := a.db.Tests().Get(a.ctx, testID)
+	if err != nil {
+		return service.AnalysisDTO{}, err
+	}
+	return a.AnalyzeWith(testID, service.DefaultConfigDTO(test.Sport))
+}
+
+// GetMarkerOptions lists all markers and their required fit (FR-D2/D4).
+func (a *App) GetMarkerOptions() []service.MarkerOption { return service.AllMarkerOptions() }
+
+// GetProfileOptions lists predefined training profiles for a sport (FR-Z5).
+func (a *App) GetProfileOptions(sport string) []service.ProfileOption {
+	return service.ProfileOptionsForSport(sport)
+}
+
+func (a *App) analyzeInternal(testID int64, dto service.AnalysisConfigDTO) (service.AnalysisDTO, error) {
 	test, err := a.db.Tests().Get(a.ctx, testID)
 	if err != nil {
 		return service.AnalysisDTO{}, err
@@ -120,7 +182,7 @@ func (a *App) Analyze(testID int64) (service.AnalysisDTO, error) {
 		return service.AnalysisDTO{}, err
 	}
 	dt := service.StoreToDomain(test, steps)
-	cfg := configForSport(test.Sport)
+	cfg := service.ToConfig(dto)
 	res, err := analysis.Analyze(analysis.Input{Test: dt}, cfg)
 	if err != nil {
 		return service.AnalysisDTO{}, err
@@ -188,23 +250,45 @@ func (a *App) ExportCSV(testID int64) (string, error) {
 	return sb.String(), nil
 }
 
-func (a *App) Backup(destPath string) error { return backup.Backup(a.db.DB, destPath) }
-
-// ── helpers ─────────────────────────────────────────────────────────────────
-
-// configForSport returns the default analysis config, swapping in a cycling
-// profile when the test is a bike test.
-func configForSport(sport string) analysis.Config {
-	cfg := analysis.DefaultConfig()
-	if service.ParseSport(sport) == unit.Cycling {
-		for _, p := range zone.Predefined() {
-			if p.Sport == unit.Cycling && p.Level == "Leistung" {
-				cfg.Profile = p
-				break
-			}
-		}
+// BackupDatabase opens a save dialog and writes a consistent backup (FR-M3).
+// Returns the chosen path ("" if cancelled).
+func (a *App) BackupDatabase() (string, error) {
+	path, err := wruntime.SaveFileDialog(a.ctx, wruntime.SaveDialogOptions{
+		Title:           "Back up database",
+		DefaultFilename: "turnpoint-backup.db",
+		Filters:         []wruntime.FileFilter{{DisplayName: "Turnpoint database", Pattern: "*.db"}},
+	})
+	if err != nil || path == "" {
+		return "", err
 	}
-	return cfg
+	if err := backup.Backup(a.db.DB, path); err != nil {
+		return "", err
+	}
+	return path, nil
 }
 
-var _ = threshold.OBLA4 // keep threshold import referenced for future config DTOs
+// RestoreDatabase opens a file dialog, validates and restores the chosen backup,
+// replacing the live database (FR-M3). Returns the chosen path ("" if cancelled).
+func (a *App) RestoreDatabase() (string, error) {
+	src, err := wruntime.OpenFileDialog(a.ctx, wruntime.OpenDialogOptions{
+		Title:   "Restore database from backup",
+		Filters: []wruntime.FileFilter{{DisplayName: "Turnpoint database", Pattern: "*.db"}},
+	})
+	if err != nil || src == "" {
+		return "", err
+	}
+	dbPath := a.db.Path()
+	a.db.Close()
+	rErr := backup.Restore(dbPath, src)
+	reopened, err := store.Open(dbPath) // reopens restored DB, or the original on failure
+	if err != nil {
+		return "", err
+	}
+	a.db = reopened
+	a.mu.Lock()
+	a.cache = map[int64]cachedAnalysis{}
+	a.mu.Unlock()
+	return src, rErr
+}
+
+var _ = threshold.OBLA4 // keep threshold import referenced

@@ -32,6 +32,36 @@ const templates = [
   { id: 2, name: "Cycling (Rad)", sport: "cycling", stepDurationS: 240, increment: 40, startIntensity: 80, endIntensity: 440, mode: "continuous", visibleColumns: "", isPredefined: true },
 ];
 
+const defaultConfig = {
+  displayFit: "poly3",
+  includeBaselineInFit: false,
+  enabledMarkers: ["OBLA 2.0", "OBLA 4.0", "OBLA 6.0", "Log-log", "Dmax", "ModDmax", "LTP1", "LTP2", "IAT", "MAX"],
+  methodParams: {},
+  lt1Anchor: "Log-log",
+  lt2Anchor: "OBLA 4.0",
+  lt1Override: null,
+  lt2Override: null,
+  profileName: "Laufen Leistungssportler (6×/Woche)",
+};
+let cfgState: any = { ...defaultConfig };
+
+const markerOptions = [
+  { name: "OBLA 2.0", fitType: "spline" }, { name: "OBLA 3.0", fitType: "spline" },
+  { name: "OBLA 4.0", fitType: "spline" }, { name: "OBLA 6.0", fitType: "spline" },
+  { name: "Bsln+0.5", fitType: "spline" }, { name: "Bsln+1.0", fitType: "spline" },
+  { name: "Bsln+1.5", fitType: "spline" }, { name: "Log-log", fitType: "loglog" },
+  { name: "Dmax", fitType: "poly3" }, { name: "ModDmax", fitType: "poly3" },
+  { name: "Exp-Dmax", fitType: "exp" }, { name: "LTP1", fitType: "segmented" },
+  { name: "LTP2", fitType: "segmented" }, { name: "IAT", fitType: "poly3" },
+  { name: "LTratio", fitType: "poly3" }, { name: "D2Lmax", fitType: "poly4" },
+  { name: "MAX", fitType: "none" },
+];
+const profileOptions = [
+  { name: "Laufen Leistungssportler (6×/Woche)", sport: "Running", calibrated: true },
+  { name: "Laufen Ambitioniert (4–5×/Woche)", sport: "Running", calibrated: false },
+  { name: "Laufen Freizeit (3×/Woche)", sport: "Running", calibrated: false },
+];
+
 const wait = <T>(v: T): Promise<T> => new Promise((r) => setTimeout(() => r(v), 60));
 
 export const mockApp = {
@@ -47,12 +77,26 @@ export const mockApp = {
   GetSteps: (_id: number) => wait(steps),
   SaveSteps: (_id: number, _s: any) => wait(undefined),
   ListTemplates: () => wait(templates),
+  SaveTemplate: (_t: any) => wait(99),
+  DeleteTemplate: (_id: number) => wait(undefined),
   ListProfiles: (_sport: string) => wait([]),
   Analyze: (_id: number) => wait(analysisDTO),
+  AnalyzeWith: (_id: number, cfg: any) => {
+    cfgState = cfg;
+    return wait(analysisDTO);
+  },
+  GetAnalysisConfig: (_id: number) => wait({ ...cfgState }),
+  ResetAnalysisConfig: (_id: number) => {
+    cfgState = { ...defaultConfig };
+    return wait(analysisDTO);
+  },
+  GetMarkerOptions: () => wait(markerOptions),
+  GetProfileOptions: (_sport: string) => wait(profileOptions),
   RecomputeZones: (_id: number, _lt1: number, lt2: number) =>
     wait({ ...analysisDTO, lt2: { ...(analysisDTO as any).lt2, intensity: lt2, manual: true } }),
   ImportCSV: (_id: number, _t: string) => wait({ imported: 9, skipped: 0, errors: [] }),
   ParsePaste: (_t: string) => wait(steps),
   ExportCSV: (_id: number) => wait("intensity,time,hr,lactate,rpe\n6,03:00,98,1.24,6\n"),
-  Backup: (_p: string) => wait(undefined),
+  BackupDatabase: () => wait("/Users/demo/turnpoint-backup.db"),
+  RestoreDatabase: () => wait(""),
 };

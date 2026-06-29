@@ -1,6 +1,18 @@
 <script lang="ts">
   import { analysis } from "$lib/stores/analysis";
+  import {
+    config,
+    markerOptions,
+    profileOptions,
+    applyConfig,
+    setAnchorMethod,
+    setAnchorIntensity,
+  } from "$lib/stores/config";
+  import { ui } from "$lib/stores/ui";
   import { ZONE_COLORS, num } from "$lib/format";
+  import Button from "$lib/components/Button.svelte";
+  import Field from "$lib/components/Field.svelte";
+  import Select from "$lib/components/Select.svelte";
   import EmptyState from "$lib/components/EmptyState.svelte";
 
   // "lo–hi" with N decimal places; em-dash placeholder handled by num()
@@ -22,6 +34,45 @@
   }
   function paceRange(lo: string, hi: string): string {
     return `${pace(lo)}–${pace(hi)}`;
+  }
+
+  // The two threshold anchors, rendered with identical controls (FR-Z3).
+  const anchors = [
+    { which: "lt1", name: "IAS", full: "aerobic threshold" },
+    { which: "lt2", name: "IANS", full: "anaerobic threshold" },
+  ] as const;
+
+  // Training profile selection drives zone derivation (FR-Z5). Mutate $config
+  // immutably, then re-run the analysis so the table reflects the new profile.
+  function onProfile(e: Event) {
+    const id = $ui.activeTestId;
+    const name = (e.target as HTMLSelectElement).value;
+    config.update((c) => (c ? { ...c, profileName: name } : c));
+    if (id != null) applyConfig(id);
+  }
+
+  // Pick the marker method for an anchor; clears any manual override (FR-Z3).
+  function onMethod(which: "lt1" | "lt2", e: Event) {
+    const id = $ui.activeTestId;
+    if (id == null) return;
+    setAnchorMethod(id, which, (e.target as HTMLSelectElement).value);
+  }
+
+  // Type an exact intensity for an anchor and apply on change/Enter (FR-Z3).
+  function onIntensity(which: "lt1" | "lt2", e: Event) {
+    const id = $ui.activeTestId;
+    if (id == null) return;
+    const v = (e.target as HTMLInputElement).valueAsNumber;
+    if (!isFinite(v)) return;
+    setAnchorIntensity(id, which, v);
+  }
+
+  // Revert a manual anchor back to its method value (drops the override).
+  function autoAnchor(which: "lt1" | "lt2") {
+    const id = $ui.activeTestId;
+    if (id == null || !$config) return;
+    const marker = which === "lt1" ? $config.lt1Anchor : $config.lt2Anchor;
+    setAnchorMethod(id, which, marker);
   }
 </script>
 
@@ -54,6 +105,54 @@
         </div>
       </div>
     </div>
+
+    {#if $config}
+      <div class="controls">
+        <span class="eyebrow">Calibration</span>
+
+        <div class="profile-row">
+          <Select
+            label="Training profile"
+            value={$config.profileName}
+            options={$profileOptions.map((p) => ({
+              value: p.name,
+              label: `${p.name} · ${p.calibrated ? "calibrated" : "provisional"}`,
+            }))}
+            on:change={onProfile}
+          />
+        </div>
+
+        <div class="anchor-grid">
+          {#each anchors as a (a.which)}
+            {@const anchorVal = a.which === "lt1" ? $config.lt1Anchor : $config.lt2Anchor}
+            {@const ad = $analysis[a.which]}
+            <div class="anchor-ctl">
+              <div class="ctl-head">
+                <span class="eyebrow">{a.name} · {a.full}</span>
+                {#if ad.manual}<span class="manual-tag">manual</span>{/if}
+              </div>
+              <div class="ctl-inputs">
+                <Select
+                  label="Method"
+                  value={anchorVal}
+                  options={$markerOptions.map((m) => ({ value: m.name, label: m.name }))}
+                  on:change={(e) => onMethod(a.which, e)}
+                />
+                <Field
+                  label="Intensity"
+                  type="number"
+                  step="0.1"
+                  suffix={$analysis.unit}
+                  value={Math.round(ad.intensity * 10) / 10}
+                  on:change={(e) => onIntensity(a.which, e)}
+                />
+                <Button on:click={() => autoAnchor(a.which)}>Auto</Button>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
 
     <div class="table">
       <div class="thead">
@@ -134,6 +233,55 @@
   .card-meta {
     font-size: var(--fs-caption);
     color: var(--text-muted);
+  }
+
+  /* profile + anchor controls (FR-Z3/Z5) */
+  .controls {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .profile-row {
+    max-width: 340px;
+  }
+  .anchor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+  .anchor-ctl {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+  .ctl-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .ctl-inputs {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr auto;
+    gap: var(--space-2);
+    align-items: end;
+  }
+  .manual-tag {
+    font-size: var(--fs-eyebrow);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--warn) 16%, transparent);
+    color: var(--warn);
   }
 
   /* zone table */

@@ -12,21 +12,28 @@ testers. Everything below ships in this build.
 ### Added
 - **Athletes** — create, edit, delete and search athletes; per-athlete test
   history.
-- **Step-test entry** — spreadsheet-style grid with clipboard paste and
-  predefined Running and Cycling templates.
+- **Step-test entry** — spreadsheet-style grid with clipboard paste; predefined
+  Running and Cycling templates, plus custom templates you can create, clone,
+  edit and delete.
 - **Analysis** — lactate curve fitting and 16 threshold methods (OBLA 2/4/6,
   Bsln+, Log-log, Dmax, ModDmax, Exp-Dmax, LTP1/2, IAT, LTratio, D2Lmax, MAX),
   validated against the WinLactat reference report (e.g. OBLA 4.0 → 16.1 km/h /
   167 bpm).
+- **Configurable analysis** — enable/disable individual methods, configure their
+  parameters (OBLA concentrations, baseline deltas), and choose the displayed
+  curve fit (polynomial / exponential / spline).
 - **Training zones** — the 5-zone model (REKOM–SB) anchored on the aerobic
-  (IAS) and anaerobic (IANS) thresholds.
+  (IAS) and anaerobic (IANS) thresholds, with a selectable training profile and
+  per-anchor controls (pick the source method, type an exact intensity, or drag
+  the marker on the chart; reset to automatic anytime).
 - **Charts** — an interactive fitting chart with draggable IAS/IANS markers and
-  a temporal results chart (lactate + heart rate over time with intensity step
-  bars).
-- **Reporting** — a printable report (system print / save-as-PDF) and CSV
-  export of the step data.
-- **Data** — local-first single-file SQLite storage with database backup; all
-  data stays on your machine, no network required.
+  toggleable layers (curve, heart rate, points, zones), plus a temporal results
+  chart (lactate + heart rate over time with intensity step bars).
+- **Reporting** — a configurable report: include/omit/reorder content blocks,
+  add a header, footer, logo and free-text evaluation; print or save as PDF, and
+  export the chart as PNG/SVG and the data as CSV.
+- **Data** — local-first single-file SQLite storage with one-click database
+  backup and restore; all data stays on your machine, no network required.
 - **Look & feel** — light and dark themes; a frameless window with
   platform-appropriate controls (macOS traffic lights, Windows/Linux buttons).
 

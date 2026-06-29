@@ -53,6 +53,66 @@ export namespace csvio {
 
 export namespace service {
 	
+	export class MethodParamDTO {
+	    oblaConc: number;
+	    baselineDelta: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new MethodParamDTO(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.oblaConc = source["oblaConc"];
+	        this.baselineDelta = source["baselineDelta"];
+	    }
+	}
+	export class AnalysisConfigDTO {
+	    displayFit: string;
+	    includeBaselineInFit: boolean;
+	    enabledMarkers: string[];
+	    methodParams: Record<string, MethodParamDTO>;
+	    lt1Anchor: string;
+	    lt2Anchor: string;
+	    lt1Override?: number;
+	    lt2Override?: number;
+	    profileName: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AnalysisConfigDTO(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.displayFit = source["displayFit"];
+	        this.includeBaselineInFit = source["includeBaselineInFit"];
+	        this.enabledMarkers = source["enabledMarkers"];
+	        this.methodParams = this.convertValues(source["methodParams"], MethodParamDTO, true);
+	        this.lt1Anchor = source["lt1Anchor"];
+	        this.lt2Anchor = source["lt2Anchor"];
+	        this.lt1Override = source["lt1Override"];
+	        this.lt2Override = source["lt2Override"];
+	        this.profileName = source["profileName"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class WarningDTO {
 	    severity: string;
 	    subject: string;
@@ -248,7 +308,38 @@ export namespace service {
 		}
 	}
 	
+	export class MarkerOption {
+	    name: string;
+	    fitType: string;
 	
+	    static createFrom(source: any = {}) {
+	        return new MarkerOption(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.fitType = source["fitType"];
+	    }
+	}
+	
+	
+	export class ProfileOption {
+	    name: string;
+	    sport: string;
+	    calibrated: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ProfileOption(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.sport = source["sport"];
+	        this.calibrated = source["calibrated"];
+	    }
+	}
 	
 	
 	

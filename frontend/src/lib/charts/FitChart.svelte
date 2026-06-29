@@ -15,6 +15,12 @@
   let svgEl: SVGSVGElement;
   let width = 0;
 
+  // --- layer visibility toggles (FR-C1/OI-18) --------------------------
+  let showCurve = true;
+  let showHR = true;
+  let showPoints = true;
+  let showZones = true;
+
   // --- live drag state -------------------------------------------------
   let activeDrag: "lt1" | "lt2" | null = null;
   let liveLt1: number | null = null;
@@ -109,6 +115,46 @@
 </script>
 
 <div class="chart" bind:this={wrap} bind:clientWidth={width}>
+  <!-- layer toggles (top-right, clear of plot; container is click-through) -->
+  <div class="layers" role="group" aria-label="Chart layers">
+    <button
+      type="button"
+      class="chip"
+      class:on={showCurve}
+      aria-pressed={showCurve}
+      on:click={() => (showCurve = !showCurve)}
+    >
+      Curve
+    </button>
+    <button
+      type="button"
+      class="chip"
+      class:on={showHR}
+      aria-pressed={showHR}
+      on:click={() => (showHR = !showHR)}
+    >
+      HR
+    </button>
+    <button
+      type="button"
+      class="chip"
+      class:on={showPoints}
+      aria-pressed={showPoints}
+      on:click={() => (showPoints = !showPoints)}
+    >
+      Points
+    </button>
+    <button
+      type="button"
+      class="chip"
+      class:on={showZones}
+      aria-pressed={showZones}
+      on:click={() => (showZones = !showZones)}
+    >
+      Zones
+    </button>
+  </div>
+
   {#if width > 0}
     <svg
       bind:this={svgEl}
@@ -137,15 +183,17 @@
           >
         {/each}
 
-        {#each hrTicks as t}
-          <text
-            class="mono tick hr"
-            x={width - margin.right + 6}
-            y={yHR(t)}
-            text-anchor="start"
-            dominant-baseline="middle">{Math.round(t)}</text
-          >
-        {/each}
+        {#if showHR}
+          {#each hrTicks as t}
+            <text
+              class="mono tick hr"
+              x={width - margin.right + 6}
+              y={yHR(t)}
+              text-anchor="start"
+              dominant-baseline="middle">{Math.round(t)}</text
+            >
+          {/each}
+        {/if}
 
         {#each xTicks as t}
           <text
@@ -162,46 +210,52 @@
         <text class="mono axis-title" x={margin.left} y={plotTop - 4} text-anchor="start">
           mmol/L
         </text>
-        <text class="mono axis-title hr" x={width - margin.right} y={plotTop - 4} text-anchor="end">
-          bpm
-        </text>
+        {#if showHR}
+          <text class="mono axis-title hr" x={width - margin.right} y={plotTop - 4} text-anchor="end">
+            bpm
+          </text>
+        {/if}
         <text class="mono axis-title" x={(margin.left + width - margin.right) / 2} y={height - 2} text-anchor="middle">
           {data.unit || "intensity"}
         </text>
       </g>
 
       <!-- (1) zone bands -->
-      <g class="zones">
-        {#each data.zones as z (z.index)}
-          <rect
-            x={x(z.intensityLow)}
-            width={Math.max(0, x(z.intensityHigh) - x(z.intensityLow))}
-            y={plotTop}
-            height={plotBottom - plotTop}
-            fill={ZONE_COLORS[z.label] ?? "var(--surface-2)"}
-            fill-opacity="0.12"
-          />
-        {/each}
-      </g>
+      {#if showZones}
+        <g class="zones">
+          {#each data.zones as z (z.index)}
+            <rect
+              x={x(z.intensityLow)}
+              width={Math.max(0, x(z.intensityHigh) - x(z.intensityLow))}
+              y={plotTop}
+              height={plotBottom - plotTop}
+              fill={ZONE_COLORS[z.label] ?? "var(--surface-2)"}
+              fill-opacity="0.12"
+            />
+          {/each}
+        </g>
+      {/if}
 
       <!-- (3) HR overlay (behind lactate curve, faint dashed) -->
-      {#if hrPath}
+      {#if showHR && hrPath}
         <path class="hr-line" d={hrPath} />
       {/if}
 
       <!-- (2) fitted lactate curve -->
-      {#if curvePath}
+      {#if showCurve && curvePath}
         <path class="curve" d={curvePath} />
       {/if}
 
       <!-- (4) raw measured points -->
-      <g class="raw">
-        {#each data.rawPoints as p}
-          <circle cx={x(p.x)} cy={yLactate(p.y)} r="3.5" />
-        {/each}
-      </g>
+      {#if showPoints}
+        <g class="raw">
+          {#each data.rawPoints as p}
+            <circle cx={x(p.x)} cy={yLactate(p.y)} r="3.5" />
+          {/each}
+        </g>
+      {/if}
 
-      <!-- (5) threshold markers -->
+      <!-- (5) threshold markers (always visible) -->
       {#each [{ key: "lt1", label: "IAS", xi: lt1Intensity, manual: data.lt1.manual }, { key: "lt2", label: "IANS", xi: lt2Intensity, manual: data.lt2.manual }] as m}
         <g
           class="marker"
@@ -234,6 +288,7 @@
 
 <style>
   .chart {
+    position: relative;
     width: 100%;
     height: 360px;
     background: var(--surface);
@@ -243,6 +298,48 @@
   }
   svg {
     display: block;
+  }
+
+  /* layer toggles — subtle, top-right, click-through container so they
+     never swallow marker drag events outside the chip hit-areas */
+  .layers {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    z-index: 2;
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    pointer-events: none;
+  }
+  .chip {
+    pointer-events: auto;
+    appearance: none;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: var(--fs-eyebrow);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--text-faint);
+    padding: 3px 7px;
+    border-radius: var(--radius-pill);
+    transition: color 0.12s ease, background-color 0.12s ease;
+  }
+  .chip:hover {
+    color: var(--text-muted);
+  }
+  .chip.on {
+    color: var(--accent);
+    background: var(--surface-2);
+  }
+  .chip:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
   }
 
   .tick {

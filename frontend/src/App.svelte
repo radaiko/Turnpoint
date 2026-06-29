@@ -9,10 +9,12 @@
   import Athletes from "./views/Athletes.svelte";
   import TestWorkspace from "./views/TestWorkspace.svelte";
   import Comparison from "./views/Comparison.svelte";
+  import Settings from "./views/Settings.svelte";
 
-  const navItems: { id: "athletes" | "comparison"; label: string; icon: string }[] = [
+  const navItems: { id: "athletes" | "comparison" | "settings"; label: string; icon: string }[] = [
     { id: "athletes", label: "Athletes", icon: "◍" },
     { id: "comparison", label: "Comparison", icon: "≋" },
+    { id: "settings", label: "Settings", icon: "⚙" },
   ];
 
   let platform: Platform = "windows";
@@ -63,7 +65,9 @@
   </nav>
 
   <main class="stage">
-    {#if $ui.section === "comparison"}
+    {#if $ui.section === "settings"}
+      <Settings />
+    {:else if $ui.section === "comparison"}
       <Comparison />
     {:else if $ui.activeTestId}
       <TestWorkspace />

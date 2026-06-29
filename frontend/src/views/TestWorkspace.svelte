@@ -3,13 +3,19 @@
   import { get } from "svelte/store";
   import { ui, setStage, type Stage } from "$lib/stores/ui";
   import { analysis, ensureAnalysis } from "$lib/stores/analysis";
+  import { loadConfig } from "$lib/stores/config";
+  import { App } from "$lib/api";
   import Button from "$lib/components/Button.svelte";
 
   // Run the analysis once when the workspace opens so Analysis/Zones/Report all
-  // have data regardless of which stage the user visits first.
-  onMount(() => {
+  // have data regardless of which stage the user visits first, and load the
+  // per-test analysis configuration.
+  onMount(async () => {
     const id = get(ui).activeTestId;
-    if (id) ensureAnalysis(id);
+    if (!id) return;
+    const test = await App.GetTest(id);
+    await loadConfig(id, test.sport);
+    await ensureAnalysis(id);
   });
   import TestEntry from "./TestEntry.svelte";
   import Analysis from "./Analysis.svelte";

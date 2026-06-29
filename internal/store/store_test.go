@@ -22,8 +22,8 @@ func TestMigrateAndSeed(t *testing.T) {
 	if err := db.QueryRow(`PRAGMA user_version`).Scan(&v); err != nil {
 		t.Fatal(err)
 	}
-	if v != 2 {
-		t.Errorf("user_version = %d, want 2", v)
+	if v != 3 {
+		t.Errorf("user_version = %d, want 3", v)
 	}
 	// re-migrate is a no-op
 	if err := Migrate(db.DB); err != nil {

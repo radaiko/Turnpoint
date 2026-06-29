@@ -106,6 +106,25 @@ type ThresholdMethod interface {
 	Compute(f fit.Fit, ctx Context) Result
 }
 
+// AllMarkers returns every marker in canonical order.
+func AllMarkers() []Marker {
+	out := make([]Marker, 0, int(MAX)+1)
+	for m := OBLA2; m <= MAX; m++ {
+		out = append(out, m)
+	}
+	return out
+}
+
+// MarkerFromString resolves a marker by its display name (Marker.String()).
+func MarkerFromString(s string) (Marker, bool) {
+	for _, m := range AllMarkers() {
+		if m.String() == s {
+			return m, true
+		}
+	}
+	return 0, false
+}
+
 // Default returns every §6 method with its shipped parameters.
 func Default() []ThresholdMethod {
 	return []ThresholdMethod{

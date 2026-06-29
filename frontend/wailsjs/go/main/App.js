@@ -6,12 +6,20 @@ export function Analyze(arg1) {
   return window['go']['main']['App']['Analyze'](arg1);
 }
 
-export function Backup(arg1) {
-  return window['go']['main']['App']['Backup'](arg1);
+export function AnalyzeWith(arg1, arg2) {
+  return window['go']['main']['App']['AnalyzeWith'](arg1, arg2);
+}
+
+export function BackupDatabase() {
+  return window['go']['main']['App']['BackupDatabase']();
 }
 
 export function DeleteAthlete(arg1) {
   return window['go']['main']['App']['DeleteAthlete'](arg1);
+}
+
+export function DeleteTemplate(arg1) {
+  return window['go']['main']['App']['DeleteTemplate'](arg1);
 }
 
 export function DeleteTest(arg1) {
@@ -22,8 +30,20 @@ export function ExportCSV(arg1) {
   return window['go']['main']['App']['ExportCSV'](arg1);
 }
 
+export function GetAnalysisConfig(arg1) {
+  return window['go']['main']['App']['GetAnalysisConfig'](arg1);
+}
+
 export function GetAthlete(arg1) {
   return window['go']['main']['App']['GetAthlete'](arg1);
+}
+
+export function GetMarkerOptions() {
+  return window['go']['main']['App']['GetMarkerOptions']();
+}
+
+export function GetProfileOptions(arg1) {
+  return window['go']['main']['App']['GetProfileOptions'](arg1);
 }
 
 export function GetSteps(arg1) {
@@ -62,12 +82,24 @@ export function RecomputeZones(arg1, arg2, arg3) {
   return window['go']['main']['App']['RecomputeZones'](arg1, arg2, arg3);
 }
 
+export function ResetAnalysisConfig(arg1) {
+  return window['go']['main']['App']['ResetAnalysisConfig'](arg1);
+}
+
+export function RestoreDatabase() {
+  return window['go']['main']['App']['RestoreDatabase']();
+}
+
 export function SaveAthlete(arg1) {
   return window['go']['main']['App']['SaveAthlete'](arg1);
 }
 
 export function SaveSteps(arg1, arg2) {
   return window['go']['main']['App']['SaveSteps'](arg1, arg2);
+}
+
+export function SaveTemplate(arg1) {
+  return window['go']['main']['App']['SaveTemplate'](arg1);
 }
 
 export function SaveTest(arg1) {

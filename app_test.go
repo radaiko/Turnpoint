@@ -125,3 +125,49 @@ func TestAppHappyPath(t *testing.T) {
 		t.Fatalf("ImportCSV: %v %+v", err, rep)
 	}
 }
+
+// TestAnalysisConfigRoundTrip verifies a custom config (FR-D2/F2/Z5) persists and
+// changes the result, and resets back to default.
+func TestAnalysisConfigRoundTrip(t *testing.T) {
+	app := newTestApp(t)
+	aid, _ := app.SaveAthlete(store.Athlete{Name: "Cfg", Sex: "unspecified"})
+	tid, _ := app.SaveTest(store.Test{AthleteID: aid, TestDate: "2025-02-01", Sport: "running",
+		StepDurationS: 180, Increment: 2, StartIntensity: 6})
+	_ = app.SaveSteps(tid, appendixASteps(tid))
+
+	// default config first
+	if _, err := app.Analyze(tid); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := app.GetAnalysisConfig(tid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.EnabledMarkers) == 0 {
+		t.Fatal("default config has no enabled markers")
+	}
+
+	// switch IANS anchor to OBLA 2.0 → IANS intensity must change
+	base, _ := app.Analyze(tid)
+	cfg.LT2Anchor = "OBLA 2.0"
+	changed, err := app.AnalyzeWith(tid, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(base.LT2.Intensity-changed.LT2.Intensity) < 1.0 {
+		t.Errorf("changing IANS anchor had no effect: %.2f vs %.2f", base.LT2.Intensity, changed.LT2.Intensity)
+	}
+	// persisted
+	got, _ := app.GetAnalysisConfig(tid)
+	if got.LT2Anchor != "OBLA 2.0" {
+		t.Errorf("config not persisted: %s", got.LT2Anchor)
+	}
+	// reset
+	reset, err := app.ResetAnalysisConfig(tid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(reset.LT2.Intensity-base.LT2.Intensity) > 1e-9 {
+		t.Errorf("reset did not restore default IANS: %.2f vs %.2f", reset.LT2.Intensity, base.LT2.Intensity)
+	}
+}

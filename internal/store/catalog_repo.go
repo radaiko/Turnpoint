@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 )
 
@@ -55,6 +56,25 @@ func (r *TemplateRepo) Create(ctx context.Context, t Template) (int64, error) {
 		return 0, err
 	}
 	return res.LastInsertId()
+}
+
+// Update modifies a user template; predefined templates are read-only (FR-T8).
+func (r *TemplateRepo) Update(ctx context.Context, t Template) error {
+	var pre int
+	if err := r.db.QueryRowContext(ctx, `SELECT is_predefined FROM template WHERE id=?`, t.ID).Scan(&pre); err != nil {
+		return err
+	}
+	if pre == 1 {
+		return ErrPredefinedReadOnly
+	}
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE template SET name=?, sport=?, step_duration_s=?, increment=?, start_intensity=?,
+		   end_intensity=?, mode=?, rest_duration_s=?, visible_columns=?,
+		   updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
+		 WHERE id=?`,
+		t.Name, t.Sport, t.StepDurationS, t.Increment, t.StartIntensity, t.EndIntensity, defMode(t.Mode),
+		t.RestDurationS, defStr(t.VisibleColumns, `["intensity","time","hr","lactate","rpe"]`), t.ID)
+	return err
 }
 
 func (r *TemplateRepo) Delete(ctx context.Context, id int64) error {
@@ -147,4 +167,32 @@ func defStr(s, def string) string {
 		return def
 	}
 	return s
+}
+
+// ConfigRepo persists the per-test analysis configuration (FR-D2).
+type ConfigRepo struct{ db *DB }
+
+func (db *DB) Configs() *ConfigRepo { return &ConfigRepo{db} }
+
+// Get returns the stored config JSON for a test, ok=false if none saved yet.
+func (r *ConfigRepo) Get(ctx context.Context, testID int64) (string, bool, error) {
+	var j string
+	err := r.db.QueryRowContext(ctx, `SELECT config_json FROM analysis_config WHERE test_id=?`, testID).Scan(&j)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", false, nil
+		}
+		return "", false, err
+	}
+	return j, true, nil
+}
+
+// Upsert saves the config JSON for a test.
+func (r *ConfigRepo) Upsert(ctx context.Context, testID int64, configJSON string) error {
+	_, err := r.db.ExecContext(ctx,
+		`INSERT INTO analysis_config (test_id, config_json) VALUES (?,?)
+		 ON CONFLICT(test_id) DO UPDATE SET config_json=excluded.config_json,
+		   updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')`,
+		testID, configJSON)
+	return err
 }
