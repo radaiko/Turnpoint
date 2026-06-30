@@ -1,6 +1,7 @@
 # Go
 /Turnpoint
 /build/bin
+build/windows/installer/tmp/
 
 # Node / frontend
 node_modules/

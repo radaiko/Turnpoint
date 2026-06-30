@@ -1,0 +1,135 @@
+name: Release
+
+# Cut a release when a version tag (vX.Y.Z) is pushed. The tag must point at a
+# commit that is on main. Builds a Windows NSIS installer and publishes a GitHub
+# release whose notes are that version's section of CHANGELOG.md.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # required to create the release
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure the tag is on main
+        run: |
+          git fetch origin main --depth=0 || git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tag ${GITHUB_REF_NAME} (commit ${GITHUB_SHA}) is not on main; refusing to release."
+            exit 1
+          fi
+          echo "Tag ${GITHUB_REF_NAME} is on main."
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Go tests (core parity, persistence, app facade)
+        env:
+          CGO_ENABLED: "0"
+        run: go test ./...
+
+      - name: Frontend type-check
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run check
+
+  windows-installer:
+    name: Windows installer
+    needs: verify
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Wails CLI
+        shell: bash
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Install NSIS
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          echo "C:\Program Files (x86)\NSIS" >> $env:GITHUB_PATH
+
+      - name: Sync installer version to the tag
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          jq --arg v "$VERSION" '.info.productVersion = $v' wails.json > wails.json.tmp
+          mv wails.json.tmp wails.json
+          echo "wails.json info.productVersion = ${VERSION}"
+
+      - name: Build Windows installer
+        shell: bash
+        run: wails build -platform windows/amd64 -nsis -clean -trimpath
+
+      - name: Package installer artifact
+        id: pkg
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          installer=$(ls build/bin/*-installer.exe | head -n1)
+          asset="Turnpoint-${VERSION}-windows-amd64-setup.exe"
+          cp "$installer" "build/bin/${asset}"
+          echo "asset=build/bin/${asset}" >> "$GITHUB_OUTPUT"
+          echo "Built ${asset}"
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) { exit }
+              if (index($0, "[" ver "]") > 0) { found=1; next }
+            }
+            found { print }
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "Release ${GITHUB_REF_NAME}." > RELEASE_NOTES.md
+            echo "::warning::No CHANGELOG.md section found for ${VERSION}; using a placeholder."
+          fi
+          echo "----- release notes -----"
+          cat RELEASE_NOTES.md
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Turnpoint ${{ github.ref_name }}
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: ${{ steps.pkg.outputs.asset }}

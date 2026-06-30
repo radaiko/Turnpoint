@@ -1,6 +1,6 @@
 module github.com/radaiko/turnpoint
 
-go 1.26.3
+go 1.25.0
 
 require (
 	github.com/wailsapp/wails/v2 v2.12.0
