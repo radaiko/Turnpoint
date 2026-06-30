@@ -4,9 +4,9 @@ All notable changes to Turnpoint are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com); the project aims to follow
 semantic versioning. The in-app **What's New** dialog renders this file.
 
-## [0.0.2] — Unreleased
+## [0.0.2] — 2026-06-30
 
-Feedback from the first test build. _Work in progress._
+Feedback from the first test build, plus automatic updates.
 
 ### Added
 - **Automatic updates** — on launch Turnpoint checks GitHub for a newer release
