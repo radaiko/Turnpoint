@@ -13,6 +13,7 @@ export interface UIState {
   stage: Stage;
   theme: Theme;
   region: Region;
+  autoCheckUpdates: boolean;
 }
 
 function initialTheme(): Theme {
@@ -33,16 +34,28 @@ export const ui = writable<UIState>({
   stage: "entry",
   theme: initialTheme(),
   region: initialRegion(),
+  autoCheckUpdates: localStorage.getItem("tp-auto-update") !== "off",
 });
 
 ui.subscribe((s) => {
   document.documentElement.setAttribute("data-theme", s.theme);
   localStorage.setItem("tp-theme", s.theme);
   localStorage.setItem("tp-region", s.region);
+  localStorage.setItem("tp-auto-update", s.autoCheckUpdates ? "on" : "off");
 });
 
 export function setRegion(region: Region) {
   ui.update((s) => ({ ...s, region }));
+}
+
+export function setAutoCheckUpdates(on: boolean) {
+  ui.update((s) => ({ ...s, autoCheckUpdates: on }));
+}
+
+// What's New / changelog dialog — opened from the footer and Settings.
+export const whatsNewOpen = writable(false);
+export function openWhatsNew() {
+  whatsNewOpen.set(true);
 }
 
 export function toggleTheme() {

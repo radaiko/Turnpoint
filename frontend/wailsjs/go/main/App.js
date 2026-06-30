@@ -10,8 +10,16 @@ export function AnalyzeWith(arg1, arg2) {
   return window['go']['main']['App']['AnalyzeWith'](arg1, arg2);
 }
 
+export function AppVersion() {
+  return window['go']['main']['App']['AppVersion']();
+}
+
 export function BackupDatabase() {
   return window['go']['main']['App']['BackupDatabase']();
+}
+
+export function CheckForUpdate() {
+  return window['go']['main']['App']['CheckForUpdate']();
 }
 
 export function DeleteAthlete(arg1) {
@@ -24,6 +32,10 @@ export function DeleteTemplate(arg1) {
 
 export function DeleteTest(arg1) {
   return window['go']['main']['App']['DeleteTest'](arg1);
+}
+
+export function DownloadAndRunUpdate(arg1) {
+  return window['go']['main']['App']['DownloadAndRunUpdate'](arg1);
 }
 
 export function ExportCSV(arg1) {
@@ -72,6 +84,10 @@ export function ListTemplates() {
 
 export function ListTests(arg1) {
   return window['go']['main']['App']['ListTests'](arg1);
+}
+
+export function OpenReleasePage(arg1) {
+  return window['go']['main']['App']['OpenReleasePage'](arg1);
 }
 
 export function ParsePaste(arg1) {

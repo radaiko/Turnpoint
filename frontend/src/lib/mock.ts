@@ -99,4 +99,17 @@ export const mockApp = {
   ExportCSV: (_id: number) => wait("intensity,time,hr,lactate,rpe\n6,03:00,98,1.24,6\n"),
   BackupDatabase: () => wait("/Users/demo/turnpoint-backup.db"),
   RestoreDatabase: () => wait(""),
+  AppVersion: () => wait("0.0.2"),
+  CheckForUpdate: () =>
+    wait({
+      available: true,
+      currentVersion: "0.0.2",
+      latestVersion: "0.0.3",
+      notes: "### Added\n- A mock update, for previewing the update banner.",
+      releaseUrl: "https://github.com/radaiko/Turnpoint/releases/latest",
+      downloadUrl: "https://example.com/Turnpoint-0.0.3-windows-amd64-setup.exe",
+      error: "",
+    }),
+  OpenReleasePage: (_url: string) => wait(undefined),
+  DownloadAndRunUpdate: (_url: string) => wait(undefined),
 };

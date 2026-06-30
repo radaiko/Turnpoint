@@ -2,7 +2,7 @@
 // the binding paths live in one place (the one mock seam). When running outside
 // the Wails runtime (plain browser `npm run dev`), fall back to mock data.
 import * as realApp from "$wails/go/main/App";
-import { service, store, csvio } from "$wails/go/models";
+import { service, store, csvio, main } from "$wails/go/models";
 import { mockApp } from "./mock";
 
 const wailsReady =
@@ -51,5 +51,6 @@ export type Step = store.Step;
 export type Template = store.Template;
 export type TrainingProfile = store.TrainingProfile;
 export type ImportReport = csvio.ImportReport;
+export type UpdateInfo = main.UpdateInfo;
 
 export { store, service };

@@ -1,10 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { ui, toggleTheme, setSection } from "$lib/stores/ui";
+  import { get } from "svelte/store";
+  import { ui, toggleTheme, setSection, whatsNewOpen, openWhatsNew } from "$lib/stores/ui";
+  import { checkForUpdate } from "$lib/stores/update";
   import { getPlatform, type Platform } from "$lib/window";
   import { VERSION } from "$lib/version";
   import WindowControls from "$lib/components/WindowControls.svelte";
   import WhatsNew from "$lib/components/WhatsNew.svelte";
+  import UpdateBanner from "$lib/components/UpdateBanner.svelte";
   import Toasts from "$lib/components/Toasts.svelte";
   import Athletes from "./views/Athletes.svelte";
   import TestWorkspace from "./views/TestWorkspace.svelte";
@@ -19,12 +22,14 @@
 
   let platform: Platform = "windows";
   $: isMac = platform === "darwin";
-  let showWhatsNew = false;
   onMount(async () => {
     platform = await getPlatform();
+    // Best-effort update check (the app's only network call); silent on failure.
+    if (get(ui).autoCheckUpdates) checkForUpdate();
   });
 </script>
 
+<div class="shell">
 <div class="titlebar" class:mac={isMac} style="--wails-draggable: drag">
   {#if isMac}
     <WindowControls {platform} />
@@ -43,6 +48,8 @@
   {/if}
 </div>
 
+<UpdateBanner />
+
 <div class="layout">
   <nav class="rail">
     <div class="nav-group">
@@ -58,7 +65,7 @@
       {/each}
     </div>
     <div class="nav-spacer" />
-    <button class="nav-foot" on:click={() => (showWhatsNew = true)} title="What's New">
+    <button class="nav-foot" on:click={openWhatsNew} title="What's New / changelog">
       <span class="eyebrow">Local · Offline</span>
       <span class="ver mono">v{VERSION}</span>
     </button>
@@ -76,8 +83,9 @@
     {/if}
   </main>
 </div>
+</div>
 
-<WhatsNew bind:open={showWhatsNew} on:close={() => (showWhatsNew = false)} />
+<WhatsNew bind:open={$whatsNewOpen} on:close={() => whatsNewOpen.set(false)} />
 
 <Toasts />
 
@@ -128,9 +136,15 @@
     background: var(--border);
     margin: 0 var(--space-1);
   }
+  .shell {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
   .layout {
     display: flex;
-    height: calc(100vh - var(--titlebar-h));
+    flex: 1;
+    min-height: 0;
   }
   .rail {
     width: var(--rail-w);

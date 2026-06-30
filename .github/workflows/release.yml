@@ -94,7 +94,10 @@ jobs:
 
       - name: Build Windows installer
         shell: bash
-        run: wails build -platform windows/amd64 -nsis -clean -trimpath
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          wails build -platform windows/amd64 -nsis -clean -trimpath \
+            -ldflags "-X main.appVersion=${VERSION}"
 
       - name: Package installer artifact
         id: pkg
