@@ -42,16 +42,17 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Go tests (core parity, persistence, app facade)
-        env:
-          CGO_ENABLED: "0"
-        run: go test ./...
-
-      - name: Frontend type-check
+      - name: Frontend — install, type-check, build
         working-directory: frontend
         run: |
           npm ci
           npm run check
+          npm run build # produces frontend/dist, required by main.go's go:embed
+
+      - name: Go tests (core parity, persistence, app facade)
+        env:
+          CGO_ENABLED: "0"
+        run: go test ./...
 
   windows-installer:
     name: Windows installer
