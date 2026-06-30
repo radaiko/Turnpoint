@@ -32,8 +32,6 @@ Feedback from the first test build. _Work in progress._
 - **One sheet for raw data + curve** — the raw step-data table and the lactate
   performance curve are shown together on a single page (reference-report page 2).
 
-### Fixed
-
 ## [0.0.1] — 2026-06-29
 
 First internal test build — the initial implementation, bundled for early
