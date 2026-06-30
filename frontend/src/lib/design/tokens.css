@@ -58,11 +58,11 @@
   --ok: #3f6f4a;
 
   /* data-viz */
-  --zone-rekom: #6f8fa6;
-  --zone-ga1: #5f8a6a;
-  --zone-ga2: #9a9a4e;
-  --zone-eb: #c08a3c;
-  --zone-sb: #a23028;
+  --zone-rekom: #2f7fc9;
+  --zone-ga1: #2ba35c;
+  --zone-ga2: #c7a51f;
+  --zone-eb: #e2801e;
+  --zone-sb: #d6392c;
   --series-lactate: #2a2824; /* ink curve — the primary data */
   --series-hr: #9a6314; /* muted amber */
   --series-turnpoint: #a23028; /* signal red marks the turn point */
@@ -90,11 +90,11 @@
   --danger: #d65a4e;
   --warn: #d49a3b;
   --ok: #66b07f;
-  --zone-rekom: #6f8fa6;
-  --zone-ga1: #5f8a6a;
-  --zone-ga2: #9a9a4e;
-  --zone-eb: #c08a3c;
-  --zone-sb: #d65a4e;
+  --zone-rekom: #2f7fc9;
+  --zone-ga1: #2ba35c;
+  --zone-ga2: #c7a51f;
+  --zone-eb: #e2801e;
+  --zone-sb: #e24b3c;
   --series-lactate: #d7d2c6;
   --series-hr: #d49a3b;
   --series-turnpoint: #d65a4e;

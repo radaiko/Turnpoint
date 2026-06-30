@@ -58,15 +58,10 @@ func (r *TemplateRepo) Create(ctx context.Context, t Template) (int64, error) {
 	return res.LastInsertId()
 }
 
-// Update modifies a user template; predefined templates are read-only (FR-T8).
+// Update modifies a template. Every template is editable (FR-T8); the
+// is_predefined flag is preserved so factory templates stay listed as such but
+// can be customised. (Predefined templates remain protected from deletion.)
 func (r *TemplateRepo) Update(ctx context.Context, t Template) error {
-	var pre int
-	if err := r.db.QueryRowContext(ctx, `SELECT is_predefined FROM template WHERE id=?`, t.ID).Scan(&pre); err != nil {
-		return err
-	}
-	if pre == 1 {
-		return ErrPredefinedReadOnly
-	}
 	_, err := r.db.ExecContext(ctx,
 		`UPDATE template SET name=?, sport=?, step_duration_s=?, increment=?, start_intensity=?,
 		   end_intensity=?, mode=?, rest_duration_s=?, visible_columns=?,

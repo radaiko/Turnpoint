@@ -212,13 +212,19 @@
                 <dd class="mono num">{num(anc.val?.intensity, 1)} <span class="unit">{a.unit}</span></dd>
               </div>
               <div>
+                <dt>Lactate</dt>
+                <dd class="mono num">{num(anc.val?.lactate, 1)} <span class="unit">mmol/L</span></dd>
+              </div>
+              <div>
                 <dt>HR</dt>
                 <dd class="mono num">{intStr(anc.val?.heartRate)}</dd>
               </div>
-              <div>
-                <dt>Pace</dt>
-                <dd class="mono num">{anc.val?.pace || "—"}</dd>
-              </div>
+              {#if a.hasPace}
+                <div>
+                  <dt>Pace</dt>
+                  <dd class="mono num">{anc.val?.pace || "—"}</dd>
+                </div>
+              {/if}
             </dl>
           </div>
         {/each}

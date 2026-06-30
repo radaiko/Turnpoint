@@ -4,13 +4,15 @@
   import { analysis } from "$lib/stores/analysis";
   import { ui } from "$lib/stores/ui";
   import { toast } from "$lib/stores/toast";
-  import { num, intStr, ZONE_COLORS } from "$lib/format";
+  import { num, intStr, ZONE_COLORS, formatDate } from "$lib/format";
   import Button from "$lib/components/Button.svelte";
   import Field from "$lib/components/Field.svelte";
   import EmptyState from "$lib/components/EmptyState.svelte";
   import TemporalChart from "$lib/charts/TemporalChart.svelte";
+  import FitChart from "$lib/charts/FitChart.svelte";
 
   let test: Test | null = null;
+  let athleteName = "";
 
   // Reference to the printable sheet — used to locate the chart <svg> for export.
   let sheetEl: HTMLElement;
@@ -26,10 +28,10 @@
   let blocks: { id: string; label: string; visible: boolean }[] = [
     { id: "cover", label: "Cover & athlete", visible: false },
     { id: "remarks", label: "Remarks", visible: false },
-    { id: "rawTable", label: "Raw data table", visible: true },
-    { id: "chart", label: "Temporal chart", visible: true },
+    { id: "rawCurve", label: "Raw data & curve", visible: true },
     { id: "thresholds", label: "Threshold table", visible: true },
     { id: "zones", label: "Training zones", visible: true },
+    { id: "temporal", label: "Temporal chart", visible: false },
     { id: "evaluation", label: "Evaluation", visible: false },
   ];
 
@@ -64,11 +66,20 @@
     if (id) {
       try {
         test = await App.GetTest(id);
+        if (test?.athleteId) {
+          const ath = await App.GetAthlete(test.athleteId);
+          athleteName = ath?.name ?? "";
+        }
       } catch {
         test = null;
       }
     }
   });
+
+  // Filename base: "<Athlete-Name>_<date>" (FR — report saved by athlete + date).
+  $: fileBase =
+    `${(athleteName || "report").trim().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "")}` +
+    `_${(test?.testDate || new Date().toISOString().slice(0, 10))}`;
 
   // Derived view flags — columns appear only when the data carries them.
   $: unit = $analysis?.unit ?? "";
@@ -114,6 +125,15 @@
   }
 
   function printReport() {
+    // The browser's "Save as PDF" defaults the filename to document.title, so
+    // set it to the athlete + date for the duration of the print.
+    const prev = document.title;
+    document.title = fileBase;
+    const restore = () => {
+      document.title = prev;
+      window.removeEventListener("afterprint", restore);
+    };
+    window.addEventListener("afterprint", restore);
     window.print();
   }
 
@@ -143,7 +163,7 @@
     }
     const str = new XMLSerializer().serializeToString(svg);
     const blob = new Blob([str], { type: "image/svg+xml;charset=utf-8" });
-    downloadBlob(blob, "chart.svg");
+    downloadBlob(blob, `${fileBase}-curve.svg`);
     toast("Chart SVG exported", "ok");
   }
 
@@ -177,7 +197,7 @@
       ctx.drawImage(img, 0, 0, w, h);
       canvas.toBlob((blob) => {
         if (blob) {
-          downloadBlob(blob, "chart.png");
+          downloadBlob(blob, `${fileBase}-curve.png`);
           toast("Chart PNG exported", "ok");
         } else {
           toast("Export failed", "danger");
@@ -194,7 +214,7 @@
     try {
       const csv = await App.ExportCSV(id);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      downloadBlob(blob, "test.csv");
+      downloadBlob(blob, `${fileBase}.csv`);
       toast("CSV exported", "ok");
     } catch (e) {
       toast("Export failed", "danger");
@@ -300,7 +320,9 @@
               {#if header}<p class="band-header">{header}</p>{/if}
               <h1>Lactate Threshold Report</h1>
               <p class="subtitle mono">
-                {testDate} · {sport}{unit ? ` · ${unit}` : ""}
+                {#if athleteName}{athleteName} · {/if}{formatDate(testDate, $ui.region)} · {sport}{unit
+                  ? ` · ${unit}`
+                  : ""}
               </p>
             </div>
           </div>
@@ -345,46 +367,52 @@
                   <p class="note muted">No remarks recorded.</p>
                 {/if}
               </section>
-            {:else if block.id === "rawTable"}
-              <!-- Raw data table -->
-              <section class="block">
-                <h2>Raw data</h2>
-                {#if rawRows.length}
-                  <table class="grid">
-                    <thead>
-                      <tr>
-                        <th class="left">#</th>
-                        <th class="r">{unit || "Intensity"}</th>
-                        <th class="r">mmol/L</th>
-                        {#if rawHasHr}<th class="r">bpm</th>{/if}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {#each rawRows as r, i}
-                        <tr>
-                          <td class="left mono num">{i + 1}</td>
-                          <td class="r mono num">{num(r.intensity, 1)}</td>
-                          <td class="r mono num">{num(r.lactate, 2)}</td>
-                          {#if rawHasHr}<td class="r mono num">{intStr(r.hr)}</td>{/if}
-                        </tr>
-                      {/each}
-                    </tbody>
-                  </table>
-                {:else}
-                  <p class="note muted">No raw measurement points.</p>
-                {/if}
-              </section>
-            {:else if block.id === "chart"}
-              <!-- Temporal chart -->
-              <section class="block chart-block">
-                <h2>Lactate curve</h2>
-                <p class="note">
-                  Measured lactate and heart rate plotted against intensity, with the fitted
-                  lactate curve and the determined threshold anchors (IAS / IANS).
-                </p>
-                <div class="chart">
-                  <TemporalChart data={$analysis} />
+            {:else if block.id === "rawCurve"}
+              <!-- Raw data + performance (lactate) curve, kept together on one page. -->
+              <section class="block rawcurve">
+                <h2>Raw data &amp; performance curve</h2>
+                <div class="rawcurve-grid">
+                  <div class="raw-col">
+                    {#if rawRows.length}
+                      <table class="grid">
+                        <thead>
+                          <tr>
+                            <th class="left">#</th>
+                            <th class="r">{unit || "Intensity"}</th>
+                            <th class="r">mmol/L</th>
+                            {#if rawHasHr}<th class="r">bpm</th>{/if}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {#each rawRows as r, i}
+                            <tr>
+                              <td class="left mono num">{i + 1}</td>
+                              <td class="r mono num">{num(r.intensity, 1)}</td>
+                              <td class="r mono num">{num(r.lactate, 2)}</td>
+                              {#if rawHasHr}<td class="r mono num">{intStr(r.hr)}</td>{/if}
+                            </tr>
+                          {/each}
+                        </tbody>
+                      </table>
+                    {:else}
+                      <p class="note muted">No raw measurement points.</p>
+                    {/if}
+                  </div>
+                  <div class="curve-col">
+                    <div class="chart"><FitChart data={$analysis} isStatic /></div>
+                    <p class="note">
+                      Lactate and heart rate vs intensity, with the fitted curve, training-zone
+                      bands and the IAS / IANS turn points.
+                    </p>
+                  </div>
                 </div>
+              </section>
+            {:else if block.id === "temporal"}
+              <!-- Temporal view (optional) -->
+              <section class="block chart-block">
+                <h2>Temporal view</h2>
+                <p class="note">Lactate and heart rate over time, with the intensity steps.</p>
+                <div class="chart"><TemporalChart data={$analysis} /></div>
               </section>
             {:else if block.id === "thresholds"}
               <!-- Threshold results table -->
@@ -433,12 +461,9 @@
                   </thead>
                   <tbody>
                     {#each $analysis.zones as z (z.index)}
-                      <tr>
-                        <td class="left">
-                          <span class="chip">
-                            <span class="swatch" style="background:{zoneColor(z.label)}"></span>
-                            {z.label}
-                          </span>
+                      <tr class="zone-row">
+                        <td class="left zone-name" style="border-left-color:{zoneColor(z.label)}">
+                          <span class="chip">{z.label}</span>
                         </td>
                         <td class="r mono num">{rng(z.intensityLow, z.intensityHigh, 1)}</td>
                         <td class="r mono num">{rngInt(z.hrLow, z.hrHigh)}</td>
@@ -663,8 +688,32 @@
     cursor: not-allowed;
   }
 
-  /* The page sheet. */
+  /* The page sheet — always a LIGHT document (white paper, colour data), no
+     matter the app theme, so on-screen matches print. Colours are forced to
+     print via print-color-adjust. */
   .sheet {
+    --bg: #f4f3ee;
+    --surface: #fbfaf6;
+    --surface-2: #edebe3;
+    --inset: #e7e4da;
+    --border: #ddd9cd;
+    --border-strong: #c4bfaf;
+    --text: #1b1a16;
+    --text-muted: #6c685e;
+    --text-faint: #9d988a;
+    --accent: #1b1a16;
+    --signal: #a23028;
+    --series-lactate: #2a2824;
+    --series-hr: #b07a16;
+    --series-turnpoint: #a23028;
+    --zone-rekom: #2f7fc9;
+    --zone-ga1: #2ba35c;
+    --zone-ga2: #c7a51f;
+    --zone-eb: #e2801e;
+    --zone-sb: #d6392c;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+
     flex: 0 1 820px;
     max-width: 820px;
     margin: 0;
@@ -676,6 +725,24 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
+  }
+  /* raw data + curve stacked on one page — the curve gets the full width */
+  .rawcurve-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .raw-col {
+    max-width: 460px;
+  }
+  .curve-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  .zone-name {
+    border-left: 3px solid var(--border-strong);
   }
 
   /* (A) header band */
@@ -851,12 +918,6 @@
     font-weight: 500;
     color: var(--text);
   }
-  .swatch {
-    width: 10px;
-    height: 10px;
-    border-radius: var(--radius-sm);
-    flex: none;
-  }
 
   /* notes / warnings */
   .notes ul {
@@ -938,6 +999,12 @@
       background: #fff;
       color: #000;
       gap: 18px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .rawcurve {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .band {
       border-bottom: 1px solid #000;

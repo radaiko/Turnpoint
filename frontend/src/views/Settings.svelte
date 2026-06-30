@@ -136,10 +136,10 @@
             <span class="meta mono">{summary(t)}</span>
           </div>
           <div class="card-actions">
+            <Button variant="ghost" on:click={() => editTemplate(t)}>Edit</Button>
             {#if t.isPredefined}
               <Button variant="ghost" on:click={() => cloneTemplate(t)}>Clone</Button>
             {:else}
-              <Button variant="ghost" on:click={() => editTemplate(t)}>Edit</Button>
               <Button variant="danger" on:click={() => deleteTemplate(t)}>Delete</Button>
             {/if}
           </div>

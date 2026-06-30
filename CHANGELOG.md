@@ -4,6 +4,29 @@ All notable changes to Turnpoint are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com); the project aims to follow
 semantic versioning. The in-app **What's New** dialog renders this file.
 
+## [0.0.2] — Unreleased
+
+Feedback from the first test build. _Work in progress._
+
+### Added
+- **Lactate at the thresholds** — the IAS/IANS anchor cards now show the lactate
+  value (mmol/L), and it updates live while you drag a marker (e.g. LTP1/LTP2).
+- **Training zones in the report** — the 5-zone table is now part of the report.
+- Reports save with a filename built from the **athlete name and test date**
+  (e.g. `Bogner-Markus_2026-06-30`).
+
+### Changed
+- **Editable templates** — every template, including the predefined Running and
+  Cycling protocols, can now be edited — not only cloned.
+- **Bolder zone colours** — the training-zone colours are stronger and easier to
+  read at a glance.
+- **Report in colour** — the report's charts and tables now use the same colours
+  as the on-screen analysis instead of greyscale.
+- **One sheet for raw data + curve** — the raw step-data table and the lactate
+  performance curve are shown together on a single page (reference-report page 2).
+
+### Fixed
+
 ## [0.0.1] — 2026-06-29
 
 First internal test build — the initial implementation, bundled for early

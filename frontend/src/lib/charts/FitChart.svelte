@@ -7,6 +7,8 @@
 
   export let data: AnalysisDTO;
   export let onAnchorDrag: (lt1: number, lt2: number) => void = () => {};
+  // static mode (e.g. the report): no layer toggles, no dragging.
+  export let isStatic = false;
 
   const height = 360;
   const margin = { top: 16, right: 48, bottom: 36, left: 44 };
@@ -114,7 +116,8 @@
   $: plotBottom = height - margin.bottom;
 </script>
 
-<div class="chart" bind:this={wrap} bind:clientWidth={width}>
+<div class="chart" class:static={isStatic} bind:this={wrap} bind:clientWidth={width}>
+  {#if !isStatic}
   <!-- layer toggles (top-right, clear of plot; container is click-through) -->
   <div class="layers" role="group" aria-label="Chart layers">
     <button
@@ -154,6 +157,7 @@
       Zones
     </button>
   </div>
+  {/if}
 
   {#if width > 0}
     <svg
@@ -260,7 +264,7 @@
         <g
           class="marker"
           class:dragging={activeDrag === m.key}
-          on:mousedown={startDrag(m.key === "lt1" ? "lt1" : "lt2")}
+          on:mousedown={isStatic ? undefined : startDrag(m.key === "lt1" ? "lt1" : "lt2")}
           role="slider"
           tabindex="0"
           aria-label={m.label}
@@ -393,6 +397,9 @@
   .marker {
     cursor: ew-resize;
     outline: none;
+  }
+  .static .marker {
+    cursor: default;
   }
   .hit {
     fill: transparent;

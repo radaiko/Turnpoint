@@ -92,7 +92,8 @@
           {num($analysis.lt1.intensity, 1)}<span class="u">{$analysis.unit}</span>
         </div>
         <div class="card-meta mono">
-          {hr($analysis.lt1.heartRate)} bpm · {pace($analysis.lt1.pace)}
+          {num($analysis.lt1.lactate, 1)} mmol/L · {hr($analysis.lt1.heartRate)} bpm{#if $analysis.hasPace} ·
+            {pace($analysis.lt1.pace)}{/if}
         </div>
       </div>
       <div class="card">
@@ -101,7 +102,8 @@
           {num($analysis.lt2.intensity, 1)}<span class="u">{$analysis.unit}</span>
         </div>
         <div class="card-meta mono">
-          {hr($analysis.lt2.heartRate)} bpm · {pace($analysis.lt2.pace)}
+          {num($analysis.lt2.lactate, 1)} mmol/L · {hr($analysis.lt2.heartRate)} bpm{#if $analysis.hasPace} ·
+            {pace($analysis.lt2.pace)}{/if}
         </div>
       </div>
     </div>
