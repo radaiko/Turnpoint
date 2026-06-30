@@ -2,29 +2,11 @@
   import { onMount } from "svelte";
   import { App, type Template } from "$lib/api";
   import { toast } from "$lib/stores/toast";
-  import { ui, setRegion, openWhatsNew, setAutoCheckUpdates } from "$lib/stores/ui";
-  import { checkForUpdate, update } from "$lib/stores/update";
-  import { VERSION } from "$lib/version";
+  import { ui, setRegion } from "$lib/stores/ui";
   import { formatDate, type Region } from "$lib/format";
 
   function onRegion(e: Event) {
     setRegion((e.currentTarget as HTMLSelectElement).value as Region);
-  }
-  function onAutoToggle(e: Event) {
-    setAutoCheckUpdates((e.currentTarget as HTMLInputElement).checked);
-  }
-
-  let checking = false;
-  async function checkUpdates() {
-    checking = true;
-    const info = await checkForUpdate();
-    checking = false;
-    if (!info || info.error) {
-      toast(info?.error || "Could not check — are you online?", "warn");
-      return;
-    }
-    if (info.available) toast(`Update available: v${info.latestVersion}`, "ok");
-    else toast("You're on the latest version", "ok");
   }
   import Button from "$lib/components/Button.svelte";
   import Field from "$lib/components/Field.svelte";
@@ -133,39 +115,6 @@
 </script>
 
 <div class="page">
-  <section class="block">
-    <header class="block-head">
-      <div>
-        <h2>About &amp; updates</h2>
-        <p class="sub">Version, release notes and update checks.</p>
-      </div>
-    </header>
-
-    <div class="card about-card">
-      <div class="about-top">
-        <div class="ver-line">
-          <span class="mark">▲</span>
-          <span class="prod">Turnpoint</span>
-          <span class="ver mono">v{VERSION}</span>
-        </div>
-        <div class="about-actions">
-          <Button on:click={openWhatsNew}>What's new</Button>
-          <Button on:click={checkUpdates} disabled={checking || $update.checking}>
-            {checking || $update.checking ? "Checking…" : "Check for updates"}
-          </Button>
-        </div>
-      </div>
-      <label class="auto-toggle">
-        <input type="checkbox" checked={$ui.autoCheckUpdates} on:change={onAutoToggle} />
-        <span>Check for updates automatically on launch</span>
-      </label>
-      <p class="caption">
-        Checking for updates is the only time Turnpoint goes online — your data never leaves this
-        machine.
-      </p>
-    </div>
-  </section>
-
   <section class="block">
     <header class="block-head">
       <div>
@@ -365,55 +314,13 @@
     color: var(--text-faint);
   }
   .data-card,
-  .region-card,
-  .about-card {
+  .region-card {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-3);
   }
   .region-card {
     max-width: 440px;
-  }
-  .about-card {
-    max-width: 540px;
-  }
-  .about-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    flex-wrap: wrap;
-  }
-  .ver-line {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-  .mark {
-    color: var(--signal);
-    font-size: 12px;
-  }
-  .prod {
-    font-weight: 600;
-  }
-  .ver {
-    color: var(--text-muted);
-    font-size: var(--fs-caption);
-  }
-  .about-actions {
-    display: flex;
-    gap: var(--space-2);
-  }
-  .auto-toggle {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--fs-caption);
-    color: var(--text-muted);
-    cursor: pointer;
-  }
-  .auto-toggle input {
-    accent-color: var(--accent);
   }
   .data-actions {
     display: flex;

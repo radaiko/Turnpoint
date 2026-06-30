@@ -2,7 +2,7 @@ import { writable } from "svelte/store";
 
 import type { Region } from "$lib/format";
 
-export type Section = "athletes" | "comparison" | "settings";
+export type Section = "athletes" | "comparison" | "settings" | "whatsnew" | "updates";
 export type Stage = "entry" | "analysis" | "zones" | "report";
 export type Theme = "light" | "dark";
 
@@ -50,12 +50,6 @@ export function setRegion(region: Region) {
 
 export function setAutoCheckUpdates(on: boolean) {
   ui.update((s) => ({ ...s, autoCheckUpdates: on }));
-}
-
-// What's New / changelog dialog — opened from the footer and Settings.
-export const whatsNewOpen = writable(false);
-export function openWhatsNew() {
-  whatsNewOpen.set(true);
 }
 
 export function toggleTheme() {

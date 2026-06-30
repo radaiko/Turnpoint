@@ -1,6 +1,7 @@
 <script lang="ts">
   import { App } from "$lib/api";
   import { update, dismissUpdate, setInstalling } from "$lib/stores/update";
+  import { setSection } from "$lib/stores/ui";
   import { toast } from "$lib/stores/toast";
 
   $: info = $update.info;
@@ -21,7 +22,7 @@
   }
 
   function details() {
-    if (info) App.OpenReleasePage(info.releaseUrl);
+    setSection("updates");
   }
 </script>
 
@@ -33,7 +34,7 @@
       <span class="ver mono">v{info.currentVersion} → v{info.latestVersion}</span>
     </span>
     <div class="actions">
-      <button class="link" on:click={details}>Release notes</button>
+      <button class="link" on:click={details}>Details</button>
       <button class="cta" on:click={updateNow} disabled={$update.installing}>
         {$update.installing ? "Updating…" : "Update now"}
       </button>

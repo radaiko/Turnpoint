@@ -13,9 +13,10 @@ Feedback from the first test build. _Work in progress._
   and shows an update banner with a one-click **Update now** (downloads and runs
   the installer on Windows). This is the only time the app goes online, and it
   can be turned off in Settings.
-- **About & updates in Settings** — the version, release notes (**What's New**)
-  and a manual **Check for updates** now sit at the top of Settings; the version
-  in the bottom-left corner also opens the changelog.
+- **What's New & Updates sidebar pages** — the changelog and a software-update
+  panel (version, **Check for updates**, release notes and one-click **Update
+  now**) are now their own sections in the left sidebar; the Updates item shows a
+  dot when a new version is available.
 - **Lactate at the thresholds** — the IAS/IANS anchor cards now show the lactate
   value (mmol/L), and it updates live while you drag a marker (e.g. LTP1/LTP2).
 - **Training zones in the report** — the 5-zone table is now part of the report.

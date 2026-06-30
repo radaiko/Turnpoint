@@ -1,23 +1,28 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { get } from "svelte/store";
-  import { ui, toggleTheme, setSection, whatsNewOpen, openWhatsNew } from "$lib/stores/ui";
-  import { checkForUpdate } from "$lib/stores/update";
+  import { ui, toggleTheme, setSection, type Section } from "$lib/stores/ui";
+  import { checkForUpdate, update } from "$lib/stores/update";
   import { getPlatform, type Platform } from "$lib/window";
   import { VERSION } from "$lib/version";
   import WindowControls from "$lib/components/WindowControls.svelte";
-  import WhatsNew from "$lib/components/WhatsNew.svelte";
   import UpdateBanner from "$lib/components/UpdateBanner.svelte";
   import Toasts from "$lib/components/Toasts.svelte";
   import Athletes from "./views/Athletes.svelte";
   import TestWorkspace from "./views/TestWorkspace.svelte";
   import Comparison from "./views/Comparison.svelte";
   import Settings from "./views/Settings.svelte";
+  import WhatsNew from "./views/WhatsNew.svelte";
+  import Updates from "./views/Updates.svelte";
 
-  const navItems: { id: "athletes" | "comparison" | "settings"; label: string }[] = [
+  const navItems: { id: Section; label: string }[] = [
     { id: "athletes", label: "Athletes" },
     { id: "comparison", label: "Comparison" },
     { id: "settings", label: "Settings" },
+  ];
+  const metaItems: { id: Section; label: string }[] = [
+    { id: "whatsnew", label: "What's New" },
+    { id: "updates", label: "Updates" },
   ];
 
   let platform: Platform = "windows";
@@ -65,10 +70,25 @@
       {/each}
     </div>
     <div class="nav-spacer" />
-    <button class="nav-foot" on:click={openWhatsNew} title="What's New / changelog">
+    <div class="nav-group">
+      {#each metaItems as item}
+        <button
+          class="nav-item"
+          class:active={$ui.section === item.id}
+          on:click={() => setSection(item.id)}
+        >
+          <span class="marker" />
+          <span>{item.label}</span>
+          {#if item.id === "updates" && $update.info?.available}
+            <span class="badge" title="Update available" />
+          {/if}
+        </button>
+      {/each}
+    </div>
+    <div class="nav-foot">
       <span class="eyebrow">Local · Offline</span>
       <span class="ver mono">v{VERSION}</span>
-    </button>
+    </div>
   </nav>
 
   <main class="stage">
@@ -76,6 +96,10 @@
       <Settings />
     {:else if $ui.section === "comparison"}
       <Comparison />
+    {:else if $ui.section === "whatsnew"}
+      <WhatsNew />
+    {:else if $ui.section === "updates"}
+      <Updates />
     {:else if $ui.activeTestId}
       <TestWorkspace />
     {:else}
@@ -84,8 +108,6 @@
   </main>
 </div>
 </div>
-
-<WhatsNew bind:open={$whatsNewOpen} on:close={() => whatsNewOpen.set(false)} />
 
 <Toasts />
 
@@ -188,6 +210,14 @@
   .nav-item.active .marker {
     background: var(--signal);
   }
+  .badge {
+    margin-left: auto;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--radius-pill);
+    background: var(--signal);
+    flex: none;
+  }
   .nav-spacer {
     flex: 1;
   }
@@ -195,14 +225,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-2);
     padding: var(--space-2);
-    border: none;
-    border-radius: var(--radius-md);
-    background: transparent;
-    width: 100%;
-  }
-  .nav-foot:hover {
-    background: var(--surface-2);
+    margin-top: var(--space-2);
   }
   .ver {
     font-size: var(--fs-eyebrow);
